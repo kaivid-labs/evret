@@ -1,0 +1,37 @@
+{
+  "queries": [
+    {
+      "query_id": "q1",
+      "query_text": "what is retrieval augmented generation",
+      "relevant_docs": ["doc_1", "doc_2"]
+    },
+    {
+      "query_id": "q2",
+      "query_text": "how does vector search work",
+      "relevant_docs": ["doc_3"]
+    }
+  ],
+  "documents": [
+    {
+      "doc_id": "doc_1",
+      "text": "RAG combines retrieval with generation to ground model outputs.",
+      "metadata": {
+        "topic": "rag"
+      }
+    },
+    {
+      "doc_id": "doc_2",
+      "text": "Retrieval can improve factuality by providing external context.",
+      "metadata": {
+        "topic": "rag"
+      }
+    },
+    {
+      "doc_id": "doc_3",
+      "text": "Vector search ranks items by embedding similarity in vector space.",
+      "metadata": {
+        "topic": "vector-search"
+      }
+    }
+  ]
+}

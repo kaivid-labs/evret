@@ -1,0 +1,3 @@
+query_id,query_text,relevant_docs
+q1,what is retrieval augmented generation,"[""doc_1"",""doc_2""]"
+q2,how does vector search work,"[""doc_3""]"

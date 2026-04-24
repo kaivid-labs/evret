@@ -1,0 +1,12 @@
+{
+  "generated_at": "2026-04-23T22:41:45.568951+00:00",
+  "metrics": {
+    "average_precision@3": 0.9166666666666666,
+    "hit_rate@2": 1.0,
+    "mrr@3": 1.0,
+    "ndcg@3": 0.9751172083949178,
+    "precision@2": 0.5,
+    "recall@3": 1.0
+  },
+  "query_count": 2
+}
