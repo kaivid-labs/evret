@@ -7,7 +7,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![PyPI version](https://badge.fury.io/py/evret.svg)](https://badge.fury.io/py/evret)
+[![PyPI version](https://img.shields.io/pypi/v/evret)](https://pypi.org/project/evret/)
 [![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)](https://github.com/example/evret/actions)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
@@ -67,6 +67,8 @@ results.to_csv("results.csv")
 ```
 
 ### Minimal Metrics Example
+
+> Metrics understanding with basic example on what happens when relevant documents are picked in the stack of entire raw data. 
 
 ```python
 from evret import HitRate, Recall, Precision, MRR, NDCG, AveragePrecision
@@ -276,9 +278,5 @@ If you use Evret in your research, please cite:
 ---
 
 <div align="center">
-
 **Built with ❤️ for the RAG and IR community**
-
-[GitHub](https://github.com/example/evret) • [Issues](https://github.com/example/evret/issues) • [Discussions](https://github.com/example/evret/discussions)
-
 </div>
