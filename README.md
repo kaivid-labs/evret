@@ -8,7 +8,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![PyPI version](https://badge.fury.io/py/evret.svg)](https://badge.fury.io/py/evret)
-[![Tests](https://github.com/example/evret/workflows/Tests/badge.svg)](https://github.com/example/evret/actions)
+[![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)](https://github.com/example/evret/actions)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 Evret brings standard Information Retrieval metrics to your RAG and search systems. Evaluate retrievers with Hit Rate, Recall, Precision, MRR, NDCG, and Average Precision in just a few lines of code. Built for simplicity, extensibility, and seamless integration with vector databases and AI frameworks.

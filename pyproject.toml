@@ -1,0 +1,77 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "evret"
+version = "0.1.0"
+description = "A focused retriever evaluation framework with standard ranking metrics."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Evret Contributors" }]
+keywords = ["retrieval", "rag", "evaluation", "metrics", "information-retrieval"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "fastembed>=0.8.0",
+    "qdrant-client>=1.17.1",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0.0"]
+qdrant = ["qdrant-client>=1.9.0"]
+chroma = ["chromadb>=0.5.0"]
+weaviate = ["weaviate-client>=4.16.0"]
+milvus = ["pymilvus>=2.4.0"]
+langchain = ["langchain-core>=0.2.0"]
+llamaindex = ["llama-index-core>=0.10.0"]
+all = [
+  "qdrant-client>=1.9.0",
+  "chromadb>=0.5.0",
+  "weaviate-client>=4.16.0",
+  "pymilvus>=2.4.0",
+  "langchain-core>=0.2.0",
+  "llama-index-core>=0.10.0",
+]
+integration = [
+  "pytest>=8.0.0",
+  "qdrant-client>=1.9.0",
+  "chromadb>=0.5.0",
+  "weaviate-client>=4.16.0",
+  "pymilvus>=2.4.0",
+  "langchain-core>=0.2.0",
+  "llama-index-core>=0.10.0",
+  "testcontainers>=4.8.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/example/evret"
+Repository = "https://github.com/example/evret"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+evret = ["py.typed"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-q"
+markers = [
+  "integration: marks Docker-backed integration tests",
+]
