@@ -11,6 +11,7 @@ from evret.evaluation import (
 )
 from evret.errors import EvretError, EvretValidationError, OptionalDependencyError
 from evret.integrations import LangChainRetrieverAdapter, LlamaIndexRetrieverAdapter
+from evret.judges import Judge, JudgmentContext, TokenOverlapJudge
 from evret.metrics import AveragePrecision, HitRate, MRR, NDCG, Precision, Recall
 from evret.retrievers import (
     BaseRetriever,
@@ -38,6 +39,8 @@ __all__ = [
     "EvretError",
     "EvretValidationError",
     "HitRate",
+    "Judge",
+    "JudgmentContext",
     "LangChainRetrieverAdapter",
     "LlamaIndexRetrieverAdapter",
     "MilvusRetriever",
@@ -49,5 +52,6 @@ __all__ = [
     "QdrantRetriever",
     "Recall",
     "RetrievalResult",
+    "TokenOverlapJudge",
     "WeaviateRetriever",
 ]
