@@ -22,7 +22,12 @@ class QueryExample:
 
     query_id: str
     query_text: str
-    relevant_doc_ids: list[str]
+    relevant_docs: list[str]
+
+    @property
+    def relevant_doc_ids(self) -> list[str]:
+        """Backward-compatible alias for existing code paths."""
+        return self.relevant_docs
 
 
 @dataclass(frozen=True, slots=True)
@@ -78,12 +83,12 @@ class EvaluationDataset:
                     or f"q{row_index}"
                 )
                 query_id = require_non_empty_str(query_id, "query_id")
-                relevant_doc_ids = cls._parse_relevant_docs(row.get("relevant_docs", ""))
+                relevant_docs = cls._parse_relevant_docs(row.get("relevant_docs", ""))
                 query_items.append(
                     QueryExample(
                         query_id=query_id,
                         query_text=query_text,
-                        relevant_doc_ids=relevant_doc_ids,
+                        relevant_docs=relevant_docs,
                     )
                 )
 
@@ -103,11 +108,11 @@ class EvaluationDataset:
         if not isinstance(relevant_docs_raw, list):
             raise EvretValidationError("relevant_docs must be a list")
 
-        relevant_doc_ids = normalize_unique_non_empty_strings(relevant_docs_raw)
+        relevant_docs = normalize_unique_non_empty_strings(relevant_docs_raw)
         return QueryExample(
             query_id=query_id,
             query_text=query_text,
-            relevant_doc_ids=relevant_doc_ids,
+            relevant_docs=relevant_docs,
         )
 
     @staticmethod
