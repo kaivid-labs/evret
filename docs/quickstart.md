@@ -145,21 +145,27 @@ from evret.judges import LLMJudge
 judge = LLMJudge(
     provider="openai",
     model="gpt-4o-mini",  # or gpt-4o
-    api_key="sk-..."      # or set OPENAI_API_KEY env var
+    api_key=None,         # or pass a key directly
+    temperature=0.0,
+    max_retries=3,
 )
 
 # Anthropic
 judge = LLMJudge(
     provider="anthropic",
     model="claude-3-5-haiku-20241022",
-    api_key="..."  # or set ANTHROPIC_API_KEY env var
+    api_key=None,
+    temperature=0.0,
+    max_retries=3,
 )
 
 # Google Gen AI
 judge = LLMJudge(
     provider="google",
     model="gemini-2.5-flash",
-    api_key="..."  # or set GEMINI_API_KEY env var
+    api_key=None,
+    temperature=0.0,
+    max_retries=3,
 )
 
 evaluator = Evaluator(
@@ -180,9 +186,19 @@ evaluator = Evaluator(
 
 | Judge | Speed | Accuracy | Cost | Dependencies |
 |-------|-------|----------|------|--------------|
-| **TokenOverlapJudge** | ⚡️ Fastest | Good | Free | None |
-| **SemanticJudge** | 🔄 Medium | Better | Free | sentence-transformers |
-| **LLMJudge** | 🐢 Slowest | Best | $$$ | openai/anthropic/google-genai |
+| **TokenOverlapJudge** | Fastest | Good | Free | None |
+| **SemanticJudge** | Medium | Better | Free | sentence-transformers |
+| **LLMJudge** | Slowest | Best | API cost | openai/anthropic/google-genai |
+
+## Judge Parameters
+
+| Judge | Parameters |
+| --- | --- |
+| `TokenOverlapJudge` | `min_tokens`, `overlap_ratio`, `query_boost` |
+| `SemanticJudge` | `model`, `threshold`, `device` |
+| `LLMJudge` | `provider`, `model`, `api_key`, `temperature`, `max_retries` |
+
+See [Judges](judges.md) for full parameter details and provider defaults.
 
 ---
 
@@ -265,8 +281,8 @@ results.to_csv("results.csv")
 ## Next Steps
 
 - Read [Architecture Guide](architecture.md) for design details
-- See [examples/](../examples/) for complete working code
-- Check [API Reference](api_reference.md) for detailed documentation
+- See the repository `examples/` directory for complete working code
+- Check [API Reference](api/package.md) for detailed documentation
 
 ---
 
@@ -301,5 +317,3 @@ print(f"Decisions: {decisions}")
 ```
 
 ---
-
-Happy evaluating! 🎯

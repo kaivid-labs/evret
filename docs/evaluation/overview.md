@@ -48,4 +48,4 @@ Export methods:
 - Evaluator asks retriever using `max(k)` across selected metrics
 - Mainline RAG evaluation stores gold supporting chunks in `relevant_docs`
 - For top-4 context evaluation, set metrics with `k=4`
-- Use `relevance_judge` only when your gold labels are paraphrases or metadata references instead of exact chunk text
+- Pass `judge=` when your gold labels are paraphrases or metadata references instead of exact chunk text

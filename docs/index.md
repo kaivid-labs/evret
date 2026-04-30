@@ -10,12 +10,12 @@ Evret is a modern Python framework for evaluating retrieval systems in RAG (Retr
 
 ### Key Features
 
-✅ **Standard IR Metrics** - Hit Rate, Recall, Precision, MRR, NDCG, Average Precision
-✅ **Judge System** - TokenOverlap, Semantic, and LLM-based matching
-✅ **Production-Ready** - Text-based evaluation for real RAG systems
-✅ **Vector DB Support** - Native adapters for Qdrant, Chroma, Weaviate, Milvus
-✅ **Framework Integration** - Seamless adapters for LangChain and LlamaIndex
-✅ **Type-Safe** - Fully typed with comprehensive test coverage
+- **Standard IR Metrics**: Hit Rate, Recall, Precision, MRR, NDCG, Average Precision
+- **Judge System**: TokenOverlap, Semantic, and LLM-based matching
+- **Production Ready**: Text-based evaluation for real RAG systems
+- **Vector DB Support**: Native adapters for Qdrant, Chroma, Weaviate, Milvus
+- **Framework Integration**: Seamless adapters for LangChain and LlamaIndex
+- **Type Safe**: Fully typed with comprehensive test coverage
 
 ---
 
@@ -53,7 +53,11 @@ Fast keyword/token-based matching with configurable thresholds.
 ```python
 from evret.judges import TokenOverlapJudge
 
-judge = TokenOverlapJudge(min_tokens=2, overlap_ratio=0.6)
+judge = TokenOverlapJudge(
+    min_tokens=2,
+    overlap_ratio=0.6,
+    query_boost=True,
+)
 ```
 
 **Best for**: Quick evaluation, keyword-based relevance, no external dependencies
@@ -64,7 +68,11 @@ Embedding-based semantic similarity using sentence-transformers.
 ```python
 from evret.judges import SemanticJudge
 
-judge = SemanticJudge(threshold=0.75)
+judge = SemanticJudge(
+    model="sentence-transformers/all-MiniLM-L6-v2",
+    threshold=0.75,
+    device="cpu",
+)
 ```
 
 **Best for**: Semantic similarity, better accuracy, no API costs
@@ -75,8 +83,13 @@ LLM-powered semantic judgment (OpenAI, Anthropic, Google Gen AI).
 ```python
 from evret.judges import LLMJudge
 
-judge = LLMJudge(provider="openai", api_key="sk-...")
-judge = LLMJudge(provider="google", model="gemini-2.5-flash")
+judge = LLMJudge(
+    provider="openai",
+    model="gpt-4o-mini",
+    api_key=None,
+    temperature=0.0,
+    max_retries=3,
+)
 ```
 
 **Best for**: Maximum accuracy, complex reasoning, paraphrase detection
@@ -87,9 +100,9 @@ judge = LLMJudge(provider="google", model="gemini-2.5-flash")
 
 | Judge | Speed | Accuracy | Cost | Dependencies |
 |-------|-------|----------|------|--------------|
-| **TokenOverlapJudge** | ⚡️ Fastest | Good | Free | None |
-| **SemanticJudge** | 🔄 Medium | Better | Free | sentence-transformers |
-| **LLMJudge** | 🐢 Slowest | Best | $$$ | openai/anthropic/google-genai |
+| **TokenOverlapJudge** | Fastest | Good | Free | None |
+| **SemanticJudge** | Medium | Better | Free | sentence-transformers |
+| **LLMJudge** | Slowest | Best | API cost | openai/anthropic/google-genai |
 
 ---
 
@@ -117,16 +130,17 @@ pip install evret[all]
 
 ### Getting Started
 - **[Quickstart Guide](quickstart.md)** - Get up and running in 5 minutes
+- **[Judge Guide](judges.md)** - Configure TokenOverlap, Semantic, and LLM judges
 - **[Architecture Overview](architecture.md)** - Understand the judge system design
 
 ### Core Guides
-- [Metrics](metrics/overview.md) - IR metrics reference
-- [Evaluation](evaluation/dataset.md) - Dataset and evaluation
-- [Retrievers](retrievers/base.md) - Retriever implementations
-- [Integrations](integrations/langchain.md) - Framework integrations
+- [Metrics](metrics/index.md) - IR metrics reference
+- [Evaluation](evaluation/overview.md) - Dataset and evaluation
+- [Retrievers](retrievers/overview.md) - Retriever implementations
+- [Integrations](integrations/overview.md) - Framework integrations
 
 ### Reference
-- [API Reference](api/modules.md) - Detailed API documentation
+- [API Reference](api/package.md) - Detailed API documentation
 
 ---
 
@@ -137,14 +151,14 @@ pip install evret[all]
 Traditional evaluation frameworks require pre-labeled document IDs:
 
 ```python
-# ❌ Toy approach: Requires IDs
+# ID-only approach
 relevant_docs = ["doc_123", "doc_456"]
 ```
 
 Evret works with **actual text content**:
 
 ```python
-# ✅ Real-world approach: Uses text
+# Text-based approach
 relevant_docs = [
     "RAG combines retrieval with generation for better accuracy",
     "Retrieval-augmented generation improves LLM responses"
@@ -156,7 +170,7 @@ relevant_docs = [
 Evret separates concerns:
 
 ```
-User Data (Text) → Judge (Matching) → Evaluator (Mapping) → Metrics (IR Math)
+User data (text) -> Judge (matching) -> Evaluator (mapping) -> Metrics (IR math)
 ```
 
 - **Judges** handle: "Does this text match that text?"

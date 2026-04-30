@@ -72,7 +72,13 @@ Each query in `examples/eval_data.json` stores the gold supporting chunks that s
 ## Build Docs Locally
 
 ```bash
-mkdocs serve
+uv run mkdocs serve
 ```
 
 Open `http://127.0.0.1:8000`.
+
+To validate the full docs site:
+
+```bash
+uv run mkdocs build --strict
+```
