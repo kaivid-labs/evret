@@ -1,44 +1,60 @@
+from pathlib import Path
+
 from fastembed import TextEmbedding
 from qdrant_client import QdrantClient, models
 
-from evret import EvaluationDataset, Evaluator, QueryExample
+from evret import EvaluationDataset, Evaluator
+from evret.judges import TokenOverlapJudge
 from evret.metrics import AveragePrecision, HitRate, MRR, NDCG, Precision, Recall
 from evret.retrievers import QdrantRetriever
 
-def index() -> QdrantRetriever:
+
+def index() -> tuple[EvaluationDataset, QdrantRetriever]:
+    base_dir = Path(__file__).resolve().parent
+    dataset = EvaluationDataset.from_json(base_dir / "eval_data.json")
     collection_name = "evret_eval"
-    docs = [
-        {"doc_id": "doc_python", "document": "Python is a programming language used for AI and data."},
-        {"doc_id": "doc_qdrant", "document": "Qdrant is a vector database for semantic retrieval."},
-        {"doc_id": "doc_sql", "document": "SQL databases store structured records in relational tables."},
-        {"doc_id": "doc_rag", "document": "RAG combines retrieval with generation for grounded answers."},
-    ]
-    model = TextEmbedding(model_name="BAAI/bge-small-en-v1.5")
-    vectors = [list(v) for v in model.embed([d["document"] for d in docs])]
-    
+    texts = [document.text for document in dataset.documents]
+    model = TextEmbedding(
+        model_name="BAAI/bge-small-en-v1.5",
+        cache_dir=str(base_dir / ".fastembed_cache"),
+    )
+    vectors = [list(vector) for vector in model.embed(texts)]
+
     client = QdrantClient(path="db")
-    client.create_collection(collection_name=collection_name, 
-                             vectors_config=models.VectorParams(size=len(vectors[0]), 
-                                                                distance=models.Distance.COSINE))
+    if client.collection_exists(collection_name):
+        client.delete_collection(collection_name)
+    client.create_collection(
+        collection_name=collection_name,
+        vectors_config=models.VectorParams(size=len(vectors[0]), distance=models.Distance.COSINE),
+    )
     points = [
-        models.PointStruct(id=i, vector=vector, payload=doc)
-        for i, (vector, doc) in enumerate(zip(vectors, docs), start=1)
+        models.PointStruct(
+            id=index,
+            vector=vector,
+            payload={"doc_id": document.doc_id, "text": document.text, **document.metadata},
+        )
+        for index, (vector, document) in enumerate(zip(vectors, dataset.documents), start=1)
     ]
     client.upsert(collection_name=collection_name, points=points)
 
-    retriever = QdrantRetriever(collection_name=collection_name, client=client, query_encoder=lambda q: list(next(model.embed([q]))))
-    return retriever
+    retriever = QdrantRetriever(
+        collection_name=collection_name,
+        client=client,
+        query_encoder=lambda query: list(next(model.embed([query]))),
+    )
+    return dataset, retriever
+
 
 def run_eval() -> None:
-    dataset = EvaluationDataset(
-        queries=[
-            QueryExample(query_id="q1", query_text="vector retrieval with qdrant", relevant_doc_ids=["doc_qdrant", "doc_rag"]),
-            QueryExample(query_id="q2", query_text="what is python used for", relevant_doc_ids=["doc_python"]),
-            QueryExample(query_id="q3", query_text="relational table records", relevant_doc_ids=["doc_sql"]),
-        ]
-    )
-    metrics = [HitRate(k=3), Recall(k=3), Precision(k=3), MRR(k=3), NDCG(k=3), AveragePrecision(k=3)]
-    print(Evaluator(retriever=index(), metrics=metrics).evaluate(dataset).summary())
+    dataset, retriever = index()
+    metrics = [HitRate(k=4), Recall(k=4), Precision(k=4), MRR(k=4), NDCG(k=4), AveragePrecision(k=4)]
+    judge = TokenOverlapJudge(min_tokens=2, overlap_ratio=0.6)
+    results = Evaluator(retriever=retriever, metrics=metrics, judge=judge).evaluate(dataset)
+    base_dir = Path(__file__).resolve().parent
+    results.to_json(base_dir / "results.json")
+    results.to_csv(base_dir / "results.csv")
+    print(results.summary())
+
 
 if __name__ == "__main__":
     run_eval()
