@@ -41,21 +41,24 @@ pip install evret
 For optional integrations:
 
 ```bash
-# Install all optional integrations
+# Install all features
 pip install evret[all]
+
+# Install specific integrations
+pip install evret[qdrant]
+pip install evret[langchain]
 ```
 
 ### 5-Minute Evaluation
 
 ```python
 from evret import EvaluationDataset, Evaluator, HitRate, MRR, NDCG
-# Load your evaluation dataset
+
 dataset = EvaluationDataset.from_json("eval_data.json")
 
-# Evaluate your retriever
 evaluator = Evaluator(
     retriever=my_retriever,
-    metrics=[HitRate(k=5), MRR(k=10), NDCG(k=10)]
+    metrics=[HitRate(k=4), MRR(k=4), NDCG(k=4)],
 )
 
 results = evaluator.evaluate(dataset)
@@ -67,8 +70,6 @@ results.to_csv("results.csv")
 ```
 
 ### Minimal Metrics Example
-
-> Metrics understanding with basic example on what happens when relevant documents are picked in the stack of entire raw data. 
 
 ```python
 from evret import HitRate, Recall, Precision, MRR, NDCG, AveragePrecision
@@ -110,10 +111,36 @@ Install all optional integrations:
 uv pip install -e ".[all]"
 ```
 
-Run tests:
+Run the default test suite:
 
 ```bash
 pytest
+```
+
+See [tests/README.md](tests/README.md) for coverage areas, optional integration tests, and test setup notes.
+
+---
+
+## 📚 Documentation
+
+Evret docs use MkDocs with Material theme.
+
+Install docs dependencies:
+
+```bash
+uv pip install -e ".[docs]"
+```
+
+Run docs locally:
+
+```bash
+mkdocs serve
+```
+
+Build static docs:
+
+```bash
+mkdocs build
 ```
 
 ---
@@ -130,32 +157,6 @@ Evret supports all standard Information Retrieval metrics:
 | **MRR@k** | Mean Reciprocal Rank of first relevant doc | Single-answer retrieval |
 | **NDCG@k** | Normalized Discounted Cumulative Gain | Rank-aware binary relevance quality |
 | **Average Precision@k** | Area under precision-recall curve | Overall ranking quality |
-
-### Usage Example
-
-```python
-from evret import HitRate, Recall, Precision, MRR, NDCG, AveragePrecision
-
-metrics = [
-    HitRate(k=5),
-    Recall(k=10),
-    Precision(k=5),
-    MRR(k=10),
-    NDCG(k=10),
-    AveragePrecision(k=10),
-]
-
-# Score a single query
-retrieved = ["doc_1", "doc_5", "doc_2"]
-relevant = {"doc_1", "doc_2"}
-
-for metric in metrics:
-    score = metric.score(
-        retrieved_by_query=[retrieved],
-        relevant_by_query=[relevant],
-    )
-    print(f"{metric.name}: {score:.4f}")
-```
 
 ---
 
@@ -186,68 +187,21 @@ docs = lc_retriever.invoke("what is RAG?")
 
 ---
 
-## 📁 Examples
-
-### Basic Evaluation Pipeline
-
-```python
-from evret import EvaluationDataset, Evaluator, HitRate, MRR
-
-dataset = EvaluationDataset.from_json("eval_data.json")
-evaluator = Evaluator(retriever=my_retriever, metrics=[HitRate(k=5), MRR(k=10)])
-results = evaluator.evaluate(dataset)
-
-results.to_json("results.json")
-results.to_csv("results.csv")
-print(results.summary())
-```
-
-### Custom Retriever
-
-```python
-from evret.retrievers import BaseRetriever
-from evret import RetrievalResult
-
-class MyCustomRetriever(BaseRetriever):
-    def retrieve(self, query: str, k: int) -> list[RetrievalResult]:
-        self._validate_k(k)
-        # Your retrieval logic here
-        return [
-            RetrievalResult(doc_id="doc_1", score=0.95, metadata={"text": "..."}),
-            RetrievalResult(doc_id="doc_2", score=0.87),
-        ]
-```
-
-### Run Examples Locally
-
-```bash
-# Basic evaluation example
-python examples/evaluate_retriever.py
-
-# Jupyter notebook quickstart
-jupyter notebook examples/langchain_rag_evaluation.ipynb
-```
-
----
-
 ## 🧪 Testing
 
-### Run Unit Tests
+Run the default suite:
 
 ```bash
 pytest
 ```
 
-### Run Integration Tests
-
-Integration tests require Docker to be running:
+Run Docker-backed integration tests:
 
 ```bash
-# Start Docker Desktop/daemon first, then run:
 EVRET_RUN_INTEGRATION=1 pytest -m integration
 ```
 
-This will spin up Docker containers for Qdrant and Chroma to run end-to-end tests.
+More details are in [tests/README.md](tests/README.md).
 
 ---
 
