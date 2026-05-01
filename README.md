@@ -22,6 +22,7 @@ Evret brings standard Information Retrieval metrics to your RAG and search syste
 **Evret** is a modern Python framework designed for evaluating retrieval systems in RAG (Retrieval-Augmented Generation) pipelines and search applications. It provides:
 
 - **Standard IR Metrics**: Hit Rate, Recall, Precision, MRR, NDCG, and Average Precision
+- **Judge-Based Matching**: Token overlap, semantic, and LLM judges for text relevance
 - **Vector Database Support**: Native adapters for Qdrant and other vector databases
 - **Framework Integration**: Seamless adapters for LangChain
 - **Production-Ready**: Type-safe, well-tested, and optimized for real-world use cases
@@ -47,18 +48,21 @@ pip install evret[all]
 # Install specific integrations
 pip install evret[qdrant]
 pip install evret[langchain]
+pip install evret[semantic]
+pip install evret[llm-openai]
 ```
 
 ### 5-Minute Evaluation
 
 ```python
-from evret import EvaluationDataset, Evaluator, HitRate, MRR, NDCG
+from evret import EvaluationDataset, Evaluator, HitRate, MRR, NDCG, TokenOverlapJudge
 
 dataset = EvaluationDataset.from_json("eval_data.json")
 
 evaluator = Evaluator(
     retriever=my_retriever,
     metrics=[HitRate(k=4), MRR(k=4), NDCG(k=4)],
+    judge=TokenOverlapJudge(min_tokens=2, overlap_ratio=0.6),
 )
 
 results = evaluator.evaluate(dataset)
@@ -67,30 +71,6 @@ print(results.summary())
 # Export results
 results.to_json("results.json")
 results.to_csv("results.csv")
-```
-
-### Minimal Metrics Example
-
-```python
-from evret import HitRate, Recall, Precision, MRR, NDCG, AveragePrecision
-
-retrieved = [
-    ["doc_1", "doc_5", "doc_2", "doc_9"],
-    ["doc_8", "doc_7", "doc_6", "doc_3"],
-]
-relevant = [
-    {"doc_1", "doc_2"},
-    {"doc_3"},
-]
-
-metrics = [HitRate(k=3), Recall(k=3), Precision(k=3), MRR(k=3), NDCG(k=3)]
-
-for metric in metrics:
-    score = metric.score(
-        retrieved_by_query=retrieved,
-        relevant_by_query=relevant,
-    )
-    print(f"{metric.name}: {score:.4f}")
 ```
 
 ---
@@ -157,6 +137,32 @@ Evret supports all standard Information Retrieval metrics:
 | **MRR@k** | Mean Reciprocal Rank of first relevant doc | Single-answer retrieval |
 | **NDCG@k** | Normalized Discounted Cumulative Gain | Rank-aware binary relevance quality |
 | **Average Precision@k** | Area under precision-recall curve | Overall ranking quality |
+
+---
+
+## ⚖️ Judges
+
+Judges decide whether retrieved text matches the expected text in your evaluation dataset. `Evaluator` uses `TokenOverlapJudge()` by default, and you can pass `judge=` when you want explicit matching behavior.
+
+```python
+from evret import Evaluator, HitRate, Recall
+from evret.judges import TokenOverlapJudge
+
+evaluator = Evaluator(
+    retriever=my_retriever,
+    metrics=[HitRate(k=4), Recall(k=4)],
+    judge=TokenOverlapJudge(min_tokens=2, overlap_ratio=0.6),
+)
+```
+
+Use `SemanticJudge` for embedding similarity and `LLMJudge` for LLM-provider based judgment.
+
+```python
+from evret.judges import LLMJudge, SemanticJudge
+
+semantic_judge = SemanticJudge(threshold=0.75)
+llm_judge = LLMJudge(provider="openai", model="gpt-4o-mini")
+```
 
 ---
 
