@@ -8,7 +8,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![PyPI version](https://img.shields.io/pypi/v/evret)](https://pypi.org/project/evret/)
-[![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)](https://github.com/example/evret/actions)
+[![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)](https://github.com/kaivid-labs/evret/actions)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 Evret brings standard Information Retrieval metrics to your RAG and search systems. Evaluate retrievers with Hit Rate, Recall, Precision, MRR, NDCG, and Average Precision in just a few lines of code. Built for simplicity, extensibility, and seamless integration with vector databases and AI frameworks.
@@ -19,15 +19,12 @@ Evret brings standard Information Retrieval metrics to your RAG and search syste
 
 ## 🌟 Overview
 
-**Evret** is a modern Python framework designed for evaluating retrieval systems in RAG (Retrieval-Augmented Generation) pipelines and search applications. It provides:
+**Evret** is a modern Python framework designed for evaluating retrieval systems in Information Retrieval pipelines and search applications. It provides:
 
 - **Standard IR Metrics**: Hit Rate, Recall, Precision, MRR, NDCG, and Average Precision
 - **Judge-Based Matching**: Token overlap, semantic, and LLM judges for text relevance
 - **Vector Database Support**: Native adapters for Qdrant and other vector databases
-- **Framework Integration**: Seamless adapters for LangChain
-- **Production-Ready**: Type-safe, well-tested, and optimized for real-world use cases
-
-Whether you're building a semantic search engine, evaluating RAG systems, or benchmarking retrieval models, Evret gives you the tools to measure what matters.
+- **Framework Integration**:  Adapters for LangChain and LlamaIndex
 
 ---
 
@@ -42,7 +39,6 @@ pip install evret
 For optional integrations:
 
 ```bash
-# Install all features
 pip install evret[all]
 
 # Install specific integrations
@@ -68,7 +64,7 @@ evaluator = Evaluator(
 results = evaluator.evaluate(dataset)
 print(results.summary())
 
-# Export results
+# Optional: Export results
 results.to_json("results.json")
 results.to_csv("results.csv")
 ```
@@ -137,6 +133,39 @@ Evret supports all standard Information Retrieval metrics:
 | **MRR@k** | Mean Reciprocal Rank of first relevant doc | Single-answer retrieval |
 | **NDCG@k** | Normalized Discounted Cumulative Gain | Rank-aware binary relevance quality |
 | **Average Precision@k** | Area under precision-recall curve | Overall ranking quality |
+
+---
+
+## 📋 Evaluation Datasets
+
+Create evaluation datasets with queries and expected answers for judge-based evaluation:
+
+```python
+from evret import EvaluationDataset, QueryExample, DocumentExample
+
+dataset = EvaluationDataset(
+    documents=[
+        DocumentExample(doc_id="doc_1", text="Python uses pip for packages."),
+        DocumentExample(doc_id="doc_2", text="Virtual environments isolate dependencies."),
+    ],
+    queries=[
+        QueryExample(
+            query_id="q1",
+            query_text="How to install Python packages?",
+            expected_answers=["pip install"]  # Judge matches this against retrieved text
+        )
+    ]
+)
+```
+
+Load datasets from JSON or CSV files:
+
+```python
+dataset = EvaluationDataset.from_json("eval_data.json")
+dataset = EvaluationDataset.from_csv("eval_data.csv")
+```
+
+For detailed dataset format documentation, classic IR evaluation with document IDs, and more examples, see the [Dataset Format Guide](https://github.com/kaivid-labs/evret/blob/main/docs/evaluation/dataset-format.md)
 
 ---
 
