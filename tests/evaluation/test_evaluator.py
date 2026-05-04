@@ -75,17 +75,17 @@ def build_dataset() -> EvaluationDataset:
         QueryExample(
             query_id="q1",
             query_text="When do employees need to submit travel expenses?",
-            relevant_docs=[documents[0].text],
+            expected_answers=[documents[0].text],
         ),
         QueryExample(
             query_id="q2",
             query_text="Does a flight above 500 dollars need manager approval?",
-            relevant_docs=[documents[1].text],
+            expected_answers=[documents[1].text],
         ),
         QueryExample(
             query_id="q3",
             query_text="What approval and hotel reimbursement limits apply to business travel?",
-            relevant_docs=[documents[1].text, documents[2].text],
+            expected_answers=[documents[1].text, documents[2].text],
         ),
     ]
     return EvaluationDataset(queries=queries, documents=documents)
@@ -143,7 +143,7 @@ def test_evaluator_supports_id_based_relevance_labels() -> None:
         QueryExample(
             query_id="q1",
             query_text="When do employees need to submit travel expenses?",
-            relevant_docs=["travel_policy_1"],
+            relevant_doc_ids=["travel_policy_1"],
         )
     ]
     retriever = CorpusRetriever(dataset.documents)
@@ -160,7 +160,7 @@ def test_evaluator_scores_top_4_contexts_against_gold_chunks() -> None:
         QueryExample(
             query_id="q4",
             query_text="What approval and hotel reimbursement limits apply to business travel?",
-            relevant_docs=[dataset.documents[1].text, dataset.documents[2].text],
+            expected_answers=[dataset.documents[1].text, dataset.documents[2].text],
         )
     ]
     retriever = CorpusRetriever(dataset.documents)
@@ -199,7 +199,7 @@ def test_evaluator_uses_custom_relevance_judge() -> None:
             QueryExample(
                 query_id="q1",
                 query_text="When do I file travel expenses?",
-                relevant_docs=["Employees must submit travel expenses within 30 days of trip completion."],
+                expected_answers=["Employees must submit travel expenses within 30 days of trip completion."],
             )
         ]
     )
