@@ -5,7 +5,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Collection, Sequence
 
-from evret.errors import EvretValidationError
+from evret.metrics._validation import validate_batch_lengths
 from evret.utils import require_positive_int
 
 
@@ -42,23 +42,28 @@ class Metric(ABC):
         relevant_by_query: Sequence[Collection[str]],
     ) -> float:
         """Score a batch of queries by averaging per-query metric values."""
-        if len(retrieved_by_query) != len(relevant_by_query):
-            raise EvretValidationError(
-                "retrieved_by_query and relevant_by_query must have same length"
-            )
+        validate_batch_lengths(retrieved_by_query, relevant_by_query)
 
         if not retrieved_by_query:
             return 0.0
 
-        total = 0.0
-        for retrieved, relevant in zip(retrieved_by_query, relevant_by_query):
-            total += self.score_query(
+        total_score = 0.0
+        num_queries = len(retrieved_by_query)
+
+        for retrieved, relevant in zip(retrieved_by_query, relevant_by_query, strict=True):
+            query_score = self.score_query(
                 retrieved_doc_ids=retrieved,
                 relevant_doc_ids=relevant,
             )
+            total_score += query_score
 
-        return total / len(retrieved_by_query)
+        return total_score / num_queries
 
     def top_k(self, retrieved_doc_ids: Sequence[str]) -> Sequence[str]:
         """Return the retrieval list trimmed to metric cutoff."""
-        return retrieved_doc_ids[: self.k]
+        k_effective = min(self.k, len(retrieved_doc_ids))
+        return retrieved_doc_ids[:k_effective]
+
+    def _extract_top_k_size(self, retrieved_doc_ids: Sequence[str]) -> int:
+        """Return the effective top-k size after considering retrieval list length."""
+        return min(self.k, len(retrieved_doc_ids))

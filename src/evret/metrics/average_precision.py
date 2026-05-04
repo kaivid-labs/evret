@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from collections.abc import Collection, Sequence
 
+from evret.metrics._ranking import compute_relevant_ranks
+from evret.metrics._set_ops import to_id_set
+from evret.metrics._validation import clamp_to_unit_interval
 from evret.metrics.base import Metric
 
 
@@ -17,19 +20,28 @@ class AveragePrecision(Metric):
         retrieved_doc_ids: Sequence[str],
         relevant_doc_ids: Collection[str],
     ) -> float:
-        relevant_set = self._relevant_set(relevant_doc_ids)
-        if not relevant_set:
+        relevant_set = to_id_set(relevant_doc_ids)
+        total_relevant = len(relevant_set)
+
+        if total_relevant == 0:
             return 0.0
 
-        hit_count = 0
+        if not retrieved_doc_ids:
+            return 0.0
+
+        relevant_ranks = compute_relevant_ranks(
+            retrieved_doc_ids=retrieved_doc_ids,
+            relevant_doc_ids=relevant_set,
+            max_rank=self.k,
+        )
+
+        if not relevant_ranks:
+            return 0.0
+
         precision_sum = 0.0
-        for rank, doc_id in enumerate(self.top_k(retrieved_doc_ids), start=1):
-            if doc_id in relevant_set:
-                hit_count += 1
-                precision_sum += hit_count / rank
+        for hit_index, rank in enumerate(relevant_ranks, start=1):
+            precision_at_rank = float(hit_index) / float(rank)
+            precision_sum += precision_at_rank
 
-        return precision_sum / len(relevant_set)
-
-    @staticmethod
-    def _relevant_set(relevant_doc_ids: Collection[str]) -> set[str]:
-        return set(relevant_doc_ids)
+        average_precision = precision_sum / float(total_relevant)
+        return clamp_to_unit_interval(average_precision)

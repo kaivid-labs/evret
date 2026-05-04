@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from collections.abc import Collection, Sequence
 
+from evret.metrics._ranking import find_first_relevant_rank
+from evret.metrics._set_ops import to_id_set
 from evret.metrics.base import Metric
 
 
@@ -21,11 +23,21 @@ class MRR(Metric):
         retrieved_doc_ids: Sequence[str],
         relevant_doc_ids: Collection[str],
     ) -> float:
-        relevant_ids = set(relevant_doc_ids)
-        if not relevant_ids:
+        relevant_set = to_id_set(relevant_doc_ids)
+
+        if not relevant_set:
             return 0.0
 
-        for rank, doc_id in enumerate(self.top_k(retrieved_doc_ids), start=1):
-            if doc_id in relevant_ids:
-                return 1.0 / rank
-        return 0.0
+        if not retrieved_doc_ids:
+            return 0.0
+
+        first_relevant_rank = find_first_relevant_rank(
+            retrieved_doc_ids=retrieved_doc_ids,
+            relevant_doc_ids=relevant_set,
+            max_rank=self.k,
+        )
+
+        if first_relevant_rank is None:
+            return 0.0
+
+        return 1.0 / float(first_relevant_rank)

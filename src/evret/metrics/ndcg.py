@@ -2,9 +2,16 @@
 
 from __future__ import annotations
 
-import math
-from collections.abc import Collection, Mapping, Sequence
+from collections.abc import Collection, Sequence
 
+from evret.metrics._dcg import (
+    build_binary_relevance_map,
+    compute_dcg,
+    compute_idcg_from_relevant_set,
+    normalize_dcg_score,
+)
+from evret.metrics._set_ops import to_id_set
+from evret.metrics._validation import clamp_to_unit_interval
 from evret.metrics.base import Metric
 
 
@@ -18,31 +25,27 @@ class NDCG(Metric):
         retrieved_doc_ids: Sequence[str],
         relevant_doc_ids: Collection[str],
     ) -> float:
-        relevance_lookup = self._relevance_lookup(relevant_doc_ids)
-        top_k_ids = self.top_k(retrieved_doc_ids)
-        dcg = self._dcg(top_k_ids, relevance_lookup)
+        relevant_set = to_id_set(relevant_doc_ids)
 
-        ideal_relevances = sorted(relevance_lookup.values(), reverse=True)[: self.k]
-        idcg = self._dcg_from_relevances(ideal_relevances)
-
-        if idcg == 0.0:
+        if not relevant_set:
             return 0.0
-        return dcg / idcg
 
-    @staticmethod
-    def _relevance_lookup(relevant_doc_ids: Collection[str]) -> dict[str, float]:
-        lookup: dict[str, float] = {}
-        for doc_id in relevant_doc_ids:
-            lookup[doc_id] = 1.0
-        return lookup
+        if not retrieved_doc_ids:
+            return 0.0
 
-    def _dcg(self, ranked_doc_ids: Sequence[str], relevance_lookup: Mapping[str, float]) -> float:
-        relevances = [relevance_lookup.get(doc_id, 0.0) for doc_id in ranked_doc_ids]
-        return self._dcg_from_relevances(relevances)
+        relevance_map = build_binary_relevance_map(relevant_set, relevance_value=1.0)
 
-    @staticmethod
-    def _dcg_from_relevances(relevances: Sequence[float]) -> float:
-        total = 0.0
-        for rank, relevance in enumerate(relevances, start=1):
-            total += relevance / math.log2(rank + 1)
-        return total
+        dcg_value = compute_dcg(
+            retrieved_doc_ids=retrieved_doc_ids,
+            relevance_scores=relevance_map,
+            k=self.k,
+        )
+
+        idcg_value = compute_idcg_from_relevant_set(
+            relevant_doc_ids=relevant_set,
+            k=self.k,
+            default_relevance=1.0,
+        )
+
+        ndcg_value = normalize_dcg_score(dcg_value, idcg_value)
+        return clamp_to_unit_interval(ndcg_value)
