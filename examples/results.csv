@@ -1,7 +1,0 @@
-metric,score
-average_precision@4,0.958333333333
-hit_rate@4,1
-mrr@4,1
-ndcg@4,0.979930197287
-precision@4,0.3125
-recall@4,1

@@ -1,5 +1,0 @@
-query_id,query_text,relevant_docs
-q1,How long do employees have to submit travel expenses after a trip?,"[""Employees must submit travel expenses within 30 days of trip completion.""]"
-q2,Does a flight above 500 dollars need manager approval before booking?,"[""Flights above 500 dollars require manager approval before booking business travel.""]"
-q3,What approval and hotel reimbursement limits apply to business travel?,"[""Flights above 500 dollars require manager approval before booking business travel."",""Hotel reimbursement is capped at 180 dollars per night unless finance approves an exception.""]"
-q4,How fast must urgent support tickets receive a first response?,"[""Urgent support tickets must receive a first response within 1 hour.""]"

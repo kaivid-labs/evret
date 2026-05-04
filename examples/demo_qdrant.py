@@ -1,59 +1,74 @@
-from pathlib import Path
-
+"""Minimal example of evaluating a Qdrant retriever with evret."""
 from fastembed import TextEmbedding
+import pypdfium2 as pdfium
 from qdrant_client import QdrantClient, models
 
 from evret import EvaluationDataset, Evaluator
+from evret.evaluation.dataset import DocumentExample, QueryExample
 from evret.judges import TokenOverlapJudge
-from evret.metrics import AveragePrecision, HitRate, MRR, NDCG, Precision, Recall
+from evret.metrics import HitRate, MRR, NDCG, Precision, Recall
 from evret.retrievers import QdrantRetriever
 
+def load_pdf_chunks(pdf_path, chunk_size: int = 500) -> list[str]:
+    """Load PDF and split into chunks."""
+    pdf = pdfium.PdfDocument(pdf_path)
+    text = " ".join(page.get_textpage().get_text_range() for page in pdf)
+    words = text.split()
+    return [" ".join(words[i : i + chunk_size]) for i in range(0, len(words), chunk_size)]
 
-def index() -> tuple[EvaluationDataset, QdrantRetriever]:
-    base_dir = Path(__file__).resolve().parent
-    dataset = EvaluationDataset.from_json(base_dir / "eval_data.json")
-    collection_name = "evret_eval"
-    texts = [document.text for document in dataset.documents]
-    model = TextEmbedding(
-        model_name="BAAI/bge-small-en-v1.5",
-        cache_dir=str(base_dir / ".fastembed_cache"),
-    )
-    vectors = [list(vector) for vector in model.embed(texts)]
+def create_dataset(chunks: list[str]) -> EvaluationDataset:
+    """Create a simple evaluation dataset with document IDs."""
+    documents = [DocumentExample(doc_id=f"doc_{i}", text=chunk) for i, chunk in enumerate(chunks)]
+    queries = [
+        QueryExample(
+            query_id="q1",
+            query_text="What is the ReAct framework?",
+            relevant_doc_ids=["doc_0", "doc_1"],
+        ),
+        QueryExample(
+            query_id="q2",
+            query_text="How does reasoning help in decision making?",
+            relevant_doc_ids=["doc_2", "doc_3"],
+        ),
+    ]
+    return EvaluationDataset(documents=documents, queries=queries)
 
-    client = QdrantClient(path="db")
-    if client.collection_exists(collection_name):
-        client.delete_collection(collection_name)
+
+def index_documents(chunks: list[str], collection_name: str) -> QdrantRetriever:
+    """Index documents in Qdrant and return retriever."""
+    model = TextEmbedding(model_name="BAAI/bge-small-en-v1.5")
+    vectors = [list(vector) for vector in model.embed(chunks)]
+
+    client = QdrantClient(path="/tmp/app") # or use https://cloud.qdrant.io/. Create free cluster and get endpoint and API key
     client.create_collection(
         collection_name=collection_name,
         vectors_config=models.VectorParams(size=len(vectors[0]), distance=models.Distance.COSINE),
     )
     points = [
-        models.PointStruct(
-            id=index,
-            vector=vector,
-            payload={"doc_id": document.doc_id, "text": document.text, **document.metadata},
-        )
-        for index, (vector, document) in enumerate(zip(vectors, dataset.documents), start=1)
+        models.PointStruct(id=i, vector=vec, payload={"doc_id": f"doc_{i}", "text": chunk})
+        for i, (vec, chunk) in enumerate(zip(vectors, chunks))
     ]
     client.upsert(collection_name=collection_name, points=points)
 
-    retriever = QdrantRetriever(
+    return QdrantRetriever(
         collection_name=collection_name,
         client=client,
         query_encoder=lambda query: list(next(model.embed([query]))),
     )
-    return dataset, retriever
 
-
-def run_eval() -> None:
-    dataset, retriever = index()
-    metrics = [HitRate(k=4), Recall(k=4), Precision(k=4), MRR(k=4), NDCG(k=4), AveragePrecision(k=4)]
-    judge = TokenOverlapJudge(min_tokens=4, overlap_ratio=0.6)
+def main():
+    """Run the evaluation."""
+    # Load PDF and create chunks
+    chunks = load_pdf_chunks("react_agent_paper.pdf")
+    # Create dataset and index documents
+    dataset = create_dataset(chunks)
+    retriever = index_documents(chunks, collection_name="react_paper")
+    # Run evaluation
+    metrics = [HitRate(k=5), Precision(k=5), Recall(k=5), MRR(k=5), NDCG(k=5)]
+    judge = TokenOverlapJudge(min_tokens=10, overlap_ratio=0.5)
     results = Evaluator(retriever=retriever, metrics=metrics, judge=judge).evaluate(dataset)
-    base_dir = Path(__file__).resolve().parent
-    results.to_json(base_dir / "results.json")
-    results.to_csv(base_dir / "results.csv")
+    # Print results
     print(results.summary())
 
 if __name__ == "__main__":
-    run_eval()
+    main()
