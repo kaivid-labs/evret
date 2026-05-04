@@ -46,6 +46,7 @@ Export methods:
 - Evaluator validates that metric names are unique
 - Evaluator validates dataset has at least one query
 - Evaluator asks retriever using `max(k)` across selected metrics
-- Mainline RAG evaluation stores gold supporting chunks in `relevant_docs`
+- Use `expected_answers` for judge-based evaluation (text snippets the judge matches against)
+- Use `relevant_doc_ids` for classic IR evaluation (pre-labeled document IDs)
 - For top-4 context evaluation, set metrics with `k=4`
-- Pass `judge=` when your gold labels are paraphrases or metadata references instead of exact chunk text
+- Pass `judge=` to customize relevance matching logic (defaults to TokenOverlapJudge)

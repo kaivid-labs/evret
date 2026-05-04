@@ -59,15 +59,12 @@ class TokenOverlapJudge(Judge):
         expected_norm = normalize_text(context.expected_text)
         retrieved_norm = normalize_text(context.retrieved_text)
 
-        # 1. Exact match
         if expected_norm == retrieved_norm:
             return True
 
-        # 2. Substring match
         if self._substring_match(expected_norm, retrieved_norm):
             return True
 
-        # 3. Token overlap
         return self._token_overlap_match(context)
 
     def _token_overlap_match(self, context: JudgmentContext) -> bool:
@@ -80,16 +77,13 @@ class TokenOverlapJudge(Judge):
 
         shared = expected_tokens & retrieved_tokens
 
-        # Check minimum tokens
         if len(shared) < self.min_tokens:
             return False
 
-        # Check overlap ratio
         ratio = len(shared) / len(expected_tokens)
         if ratio >= self.overlap_ratio:
             return True
 
-        # Query boost fallback
         if self.query_boost:
             query_tokens = set(tokenize(context.query))
             if query_tokens and len(shared & query_tokens) >= 1:

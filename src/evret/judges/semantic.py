@@ -84,14 +84,12 @@ class SemanticJudge(Judge):
         if not contexts:
             return []
 
-        # Batch encode for efficiency
         expected_texts = [ctx.expected_text for ctx in contexts]
         retrieved_texts = [ctx.retrieved_text for ctx in contexts]
 
         expected_embs = self._model.encode(expected_texts, convert_to_numpy=True)
         retrieved_embs = self._model.encode(retrieved_texts, convert_to_numpy=True)
 
-        # Vectorized cosine similarity
         similarities = self._batch_cosine_similarity(expected_embs, retrieved_embs)
         return [float(sim) >= self.threshold for sim in similarities]
 
