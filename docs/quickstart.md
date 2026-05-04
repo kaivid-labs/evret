@@ -36,7 +36,7 @@ Create `eval_data.json` with text-based relevance labels:
     {
       "query_id": "q1",
       "query_text": "What is RAG?",
-      "relevant_docs": [
+      "expected_answers": [
         "RAG combines retrieval with generation for better accuracy",
         "Retrieval-augmented generation improves LLM responses"
       ]
@@ -44,7 +44,7 @@ Create `eval_data.json` with text-based relevance labels:
     {
       "query_id": "q2",
       "query_text": "How do vector databases work?",
-      "relevant_docs": [
+      "expected_answers": [
         "Vector databases store embeddings as high-dimensional vectors",
         "They use similarity search to find nearest neighbors"
       ]

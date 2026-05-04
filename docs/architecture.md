@@ -16,7 +16,7 @@ Evret implements a **judge-based architecture** for text-based relevance matchin
 │  Dataset with text-based relevance labels                        │
 │  {                                                                │
 │    "query": "What is RAG?",                                      │
-│    "relevant_docs": [                                            │
+│    "expected_answers": [                                         │
 │      "RAG combines retrieval with generation...",               │
 │      "Retrieval-augmented generation improves accuracy..."      │
 │    ]                                                             │
@@ -441,7 +441,7 @@ dataset = EvaluationDataset(
         QueryExample(
             query_id="q1",
             query_text="What is RAG?",
-            relevant_docs=[
+            expected_answers=[
                 "RAG combines retrieval with generation for better accuracy",
                 "Retrieval-augmented generation improves LLM responses"
             ]

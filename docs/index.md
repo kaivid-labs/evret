@@ -151,15 +151,15 @@ pip install evret[all]
 Traditional evaluation frameworks require pre-labeled document IDs:
 
 ```python
-# ID-only approach
-relevant_docs = ["doc_123", "doc_456"]
+# ID-only approach (classic IR)
+relevant_doc_ids = ["doc_123", "doc_456"]
 ```
 
-Evret works with **actual text content**:
+Evret also works with **actual text content** for judge-based evaluation:
 
 ```python
-# Text-based approach
-relevant_docs = [
+# Text-based approach (judge-based)
+expected_answers = [
     "RAG combines retrieval with generation for better accuracy",
     "Retrieval-augmented generation improves LLM responses"
 ]

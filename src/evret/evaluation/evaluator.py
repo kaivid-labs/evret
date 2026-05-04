@@ -107,15 +107,15 @@ class Evaluator:
 
         for query, query_results in zip(dataset.queries, retrieved_results):
             normalized_query_text = self._normalize_label(query.query_text)
+            labels_to_match = query.relevant_doc_ids if query.relevant_doc_ids else query.expected_answers
             relevant_labels = [
                 self._normalize_label(label)
-                for label in query.relevant_docs
+                for label in labels_to_match
                 if str(label).strip()
             ]
             unique_relevant_labels = list(dict.fromkeys(relevant_labels))
             relevant_set = set(unique_relevant_labels)
 
-            # Build judgment contexts for batch evaluation
             contexts_per_result = []
             candidates_per_result = []
 
@@ -123,7 +123,6 @@ class Evaluator:
                 candidates = self._candidate_labels(result, document_text_by_id)
                 candidates_per_result.append(candidates)
 
-                # Create judgment contexts for all relevant_label x candidate pairs
                 result_contexts = []
                 for label in unique_relevant_labels:
                     for candidate in candidates:
@@ -136,14 +135,12 @@ class Evaluator:
                         )
                 contexts_per_result.append(result_contexts)
 
-            # Batch judge all contexts at once for efficiency
             all_contexts = [ctx for contexts in contexts_per_result for ctx in contexts]
             if all_contexts:
                 all_judgments = self.judge.batch_judge(all_contexts)
             else:
                 all_judgments = []
 
-            # Parse judgments back into structure
             judgment_idx = 0
             available_labels = set(unique_relevant_labels)
             normalized_retrieved: list[str] = []
@@ -153,7 +150,6 @@ class Evaluator:
                 result_judgments = all_judgments[judgment_idx:judgment_idx + num_contexts]
                 judgment_idx += num_contexts
 
-                # Find first matching label
                 matched_label = self._find_match(
                     judgments=result_judgments,
                     ordered_relevant_labels=unique_relevant_labels,

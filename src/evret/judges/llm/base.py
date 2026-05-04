@@ -123,13 +123,11 @@ class LLMJudge(Judge):
         """
         response_lower = response.strip().lower()
 
-        # Check for explicit yes/no at start
         if response_lower.startswith("yes"):
             return True
         if response_lower.startswith("no"):
             return False
 
-        # Check for boolean keywords
         positive_keywords = ["relevant", "match", "correct", "accurate", "true"]
         negative_keywords = ["irrelevant", "mismatch", "incorrect", "inaccurate", "false"]
 
@@ -141,5 +139,4 @@ class LLMJudge(Judge):
         if has_negative and not has_positive:
             return False
 
-        # Default to False if ambiguous
         return False

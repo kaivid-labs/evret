@@ -11,7 +11,6 @@ __all__ = [
     "TokenOverlapJudge",
 ]
 
-# Lazy imports for optional dependencies
 def __getattr__(name: str):
     if name == "SemanticJudge":
         from evret.judges.semantic import SemanticJudge
