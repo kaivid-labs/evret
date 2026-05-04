@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Collection, Sequence
 
+from evret.metrics._set_ops import extract_top_k_set, has_intersection, to_id_set
 from evret.metrics.base import Metric
 
 
@@ -21,6 +22,14 @@ class HitRate(Metric):
         retrieved_doc_ids: Sequence[str],
         relevant_doc_ids: Collection[str],
     ) -> float:
-        top_k_ids = set(self.top_k(retrieved_doc_ids))
-        relevant_ids = set(relevant_doc_ids)
-        return 1.0 if top_k_ids.intersection(relevant_ids) else 0.0
+        relevant_set = to_id_set(relevant_doc_ids)
+
+        if not relevant_set:
+            return 0.0
+
+        if not retrieved_doc_ids:
+            return 0.0
+
+        top_k_set = extract_top_k_set(retrieved_doc_ids, self.k)
+
+        return 1.0 if has_intersection(top_k_set, relevant_set) else 0.0
