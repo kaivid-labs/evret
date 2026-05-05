@@ -97,30 +97,6 @@ See [tests/README.md](tests/README.md) for coverage areas, optional integration 
 
 ---
 
-## 📚 Documentation
-
-Evret docs use MkDocs with Material theme.
-
-Install docs dependencies:
-
-```bash
-uv pip install -e ".[docs]"
-```
-
-Run docs locally:
-
-```bash
-mkdocs serve
-```
-
-Build static docs:
-
-```bash
-mkdocs build
-```
-
----
-
 ## 📊 Metrics
 
 Evret supports all standard Information Retrieval metrics:
@@ -237,6 +213,30 @@ EVRET_RUN_INTEGRATION=1 pytest -m integration
 ```
 
 More details are in [tests/README.md](tests/README.md).
+
+---
+
+## 📚 Documentation
+
+Evret docs use MkDocs with Material theme.
+
+Install docs dependencies:
+
+```bash
+uv pip install -e ".[docs]"
+```
+
+Run docs locally:
+
+```bash
+mkdocs serve
+```
+
+Build static docs:
+
+```bash
+mkdocs build
+```
 
 ---
 

@@ -27,7 +27,7 @@ li_retriever = LlamaIndexRetrieverAdapter(evret_retriever=my_evret_retriever, k=
 
 Some integrations require optional packages.
 
-- LangChain adapter needs `langchain-core`
+- LangChain adapter needs `langchain`
 - LlamaIndex adapter needs `llama-index-core`
 
 Evret raises `OptionalDependencyError` with install guidance if package is missing.

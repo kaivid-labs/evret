@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "evret"
-version = "0.0.1b"
+version = "0.0.1"
 description = "A focused retriever evaluation framework with standard ranking metrics."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -23,7 +23,6 @@ classifiers = [
   "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
-    "fastembed>=0.8.0",
     "qdrant-client>=1.17.1",
 ]
 
@@ -33,15 +32,34 @@ qdrant = ["qdrant-client>=1.9.0"]
 chroma = ["chromadb>=0.5.0"]
 weaviate = ["weaviate-client>=4.16.0"]
 milvus = ["pymilvus>=2.4.0"]
-langchain = ["langchain-core>=0.2.0"]
+langchain = ["langchain>=0.2.0"]
 llamaindex = ["llama-index-core>=0.10.0"]
+semantic = ["sentence-transformers>=2.2.0"]
+llm-openai = ["openai>=1.0.0"]
+llm-anthropic = ["anthropic>=0.18.0"]
+llm-google = ["google-genai>=1.0.0"]
+judges = [
+  "sentence-transformers>=2.2.0",
+  "openai>=1.0.0",
+  "anthropic>=0.18.0",
+  "google-genai>=1.0.0",
+]
+docs = [
+  "mkdocs>=1.5.0",
+  "mkdocs-material>=9.0.0",
+  "mkdocstrings[python]>=0.24.0",
+]
 all = [
   "qdrant-client>=1.9.0",
   "chromadb>=0.5.0",
   "weaviate-client>=4.16.0",
   "pymilvus>=2.4.0",
-  "langchain-core>=0.2.0",
+  "langchain>=0.2.0",
   "llama-index-core>=0.10.0",
+  "sentence-transformers>=2.2.0",
+  "openai>=1.0.0",
+  "anthropic>=0.18.0",
+  "google-genai>=1.0.0",
 ]
 integration = [
   "pytest>=8.0.0",
@@ -49,14 +67,14 @@ integration = [
   "chromadb>=0.5.0",
   "weaviate-client>=4.16.0",
   "pymilvus>=2.4.0",
-  "langchain-core>=0.2.0",
+  "langchain>=0.2.0",
   "llama-index-core>=0.10.0",
   "testcontainers>=4.8.0",
 ]
 
 [project.urls]
-Homepage = "https://github.com/example/evret"
-Repository = "https://github.com/example/evret"
+Homepage = "https://github.com/kaivid-labs/evret"
+Repository = "https://github.com/kaivid-labs/evret"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

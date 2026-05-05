@@ -1,9 +1,10 @@
 import pytest
 
-pytest.importorskip("langchain_core.documents")
+pytest.importorskip("langchain")
 
 from evret.integrations import LangChainRetrieverAdapter
 from evret.retrievers import BaseRetriever, RetrievalResult
+from langchain_core.documents import Document
 
 
 class DummyRetriever(BaseRetriever):
@@ -18,6 +19,21 @@ class DummyRetriever(BaseRetriever):
                 score=0.87,
                 metadata={"document": "alpha content", "source": "unit-test"},
             )
+        ]
+
+
+class DummyLangChainRetriever:
+    def __init__(self) -> None:
+        self.calls: list[str] = []
+
+    def invoke(self, query: str):
+        self.calls.append(query)
+        return [
+            Document(
+                page_content="alpha content",
+                metadata={"doc_id": "doc_1", "score": 0.91, "source": "unit-test"},
+            ),
+            Document(page_content="beta content", metadata={"doc_id": "doc_2"}),
         ]
 
 
@@ -62,3 +78,24 @@ def test_langchain_adapter_supports_lcel_chains() -> None:
     result = chain.invoke("alpha query")
 
     assert result == "doc_1"
+
+
+def test_langchain_adapter_converts_langchain_documents_to_evret_results() -> None:
+    retriever = DummyLangChainRetriever()
+    adapter = LangChainRetrieverAdapter(langchain_retriever=retriever)
+
+    results = adapter.retrieve("alpha query", k=1)
+
+    assert retriever.calls == ["alpha query"]
+    assert results == [
+        RetrievalResult(
+            doc_id="doc_1",
+            score=0.91,
+            metadata={
+                "doc_id": "doc_1",
+                "score": 0.91,
+                "source": "unit-test",
+                "document": "alpha content",
+            },
+        )
+    ]

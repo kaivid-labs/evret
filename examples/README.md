@@ -31,6 +31,19 @@ Shows:
 python demo_qdrant.py
 ```
 
+### `langchain_integration.py` - LangChain Retriever Evaluation
+
+**Use when:** Your retriever is a LangChain retriever
+
+Shows:
+- Load the same ReAct PDF
+- Wrap a LangChain retriever for Evret
+- Run a minimal metric evaluation
+
+```bash
+python langchain_integration.py
+```
+
 ## Quick Start
 
 ```bash
