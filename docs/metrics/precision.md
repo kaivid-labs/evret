@@ -6,37 +6,35 @@ Precision answers:
 
 "How many of the top-k results are relevant?"
 
-It focuses on result purity.
+It focuses on result purity. High precision means the LLM context receives less irrelevant content.
 
 ## Mathematical Formula
 
-Precision@k for a single query:
+For query \(i\):
 
-$$
-\text{Precision@}k = \frac{|\text{relevant docs} \cap \text{retrieved top-}k|}{k}
-$$
+\[
+\operatorname{Precision@}k_i =
+\frac{|G_i \cap R_i^{(k)}|}{k}
+\]
 
-Mean Precision@k across all queries:
+Across all queries:
 
-$$
-\text{Mean Precision@}k = \frac{1}{|Q|} \sum_{i=1}^{|Q|} \text{Precision@}k_i
-$$
-
-Precision-Recall tradeoff intuition:
-
-$$
-\uparrow k \Rightarrow \uparrow \text{Recall}, \downarrow \text{Precision}
-\qquad
-\downarrow k \Rightarrow \uparrow \text{Precision}, \downarrow \text{Recall}
-$$
+\[
+\operatorname{MeanPrecision@}k =
+\frac{1}{|Q|}
+\sum_{i=1}^{|Q|}
+\operatorname{Precision@}k_i
+\]
 
 ## Formula Breakdown
 
-- `|Q|`: total number of queries
-- `|relevant ∩ retrieved@k|`: number of relevant hits in top-`k`
-- Denominator is fixed at `k`
-- Query score range is `0` to `1`
-- In Evret, denominator remains `k` by design
+- \(Q\): set of evaluation queries
+- \(G_i\): ground truth relevant ids for query \(i\)
+- \(R_i^{(k)}\): first \(k\) retrieved ids for query \(i\)
+- \(|G_i \cap R_i^{(k)}|\): number of relevant hits in top-`k`
+- \(k\): configured cutoff
+
+Evret divides by the configured `k`, not by the number of results returned. If a retriever returns fewer than `k` results, missing slots still count against Precision@k.
 
 ## Worked Example
 
@@ -46,11 +44,13 @@ Given:
 - `retrieved@5 = [d1, d4, d2, d9, d8]`
 - `relevant = {d2, d8, d10}`
 
-Step 1: relevant hits are `{d2, d8}` so hits = `2`
+Step 1: relevant hits are `{d2, d8}`, so hits = `2`.
 
-Step 2: divide by `k = 5`
+Step 2: divide by `k = 5`.
 
-Step 3: `Precision@5(query) = 2 / 5 = 0.4`
+\[
+\operatorname{Precision@}5 = \frac{2}{5} = 0.4
+\]
 
 ## When To Use
 

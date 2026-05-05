@@ -1,319 +1,191 @@
-# Evret Quickstart Guide
+# Quickstart
 
-Get started with Evret in 5 minutes! This guide covers basic usage with the Judge system.
+This guide shows a small end-to-end evaluation with Evret.
 
----
-
-## Installation
+## Install
 
 ```bash
-# Core package (includes TokenOverlapJudge)
 pip install evret
-
-# With semantic judge
-pip install evret[semantic]
-
-# With LLM judges
-pip install evret[llm-openai]      # OpenAI
-pip install evret[llm-anthropic]   # Anthropic
-pip install evret[llm-google]      # Google Gen AI
-
-# Everything
-pip install evret[all]
 ```
 
----
+Optional integrations:
 
-## Basic Evaluation
+```bash
+pip install "evret[qdrant]"
+pip install "evret[langchain]"
+pip install "evret[semantic]"
+pip install "evret[all]"
+```
 
-### 1. Prepare Your Dataset
+## 1. Create An Evaluation Dataset
 
-Create `eval_data.json` with text-based relevance labels:
+Create `eval_data.json`:
 
 ```json
 {
   "queries": [
     {
       "query_id": "q1",
-      "query_text": "What is RAG?",
+      "query_text": "does a flight above 500 dollars need manager approval",
       "expected_answers": [
-        "RAG combines retrieval with generation for better accuracy",
-        "Retrieval-augmented generation improves LLM responses"
+        "Flights above 500 dollars require manager approval before booking business travel."
       ]
     },
     {
       "query_id": "q2",
-      "query_text": "How do vector databases work?",
+      "query_text": "what hotel reimbursement limit applies to business travel",
       "expected_answers": [
-        "Vector databases store embeddings as high-dimensional vectors",
-        "They use similarity search to find nearest neighbors"
+        "Hotel reimbursement is capped at 180 dollars per night unless finance approves an exception."
       ]
+    }
+  ],
+  "documents": [
+    {
+      "doc_id": "travel_policy_1",
+      "text": "Employees must submit travel expenses within 30 days of trip completion."
+    },
+    {
+      "doc_id": "travel_policy_2",
+      "text": "Flights above 500 dollars require manager approval before booking business travel."
+    },
+    {
+      "doc_id": "travel_policy_3",
+      "text": "Hotel reimbursement is capped at 180 dollars per night unless finance approves an exception."
     }
   ]
 }
 ```
 
-### 2. Run Evaluation
+Use `expected_answers` when you want a judge to match retrieved text against gold text. Use `relevant_doc_ids` when your dataset already has exact ground truth document ids.
+
+## 2. Define A Retriever
+
+Evret evaluates any retriever that implements `BaseRetriever`.
 
 ```python
-from evret import EvaluationDataset, Evaluator, HitRate, Recall, Precision, MRR
-from evret.judges import TokenOverlapJudge
+import re
 
-# Load dataset
-dataset = EvaluationDataset.from_json("eval_data.json")
+from evret import RetrievalResult
+from evret.retrievers import BaseRetriever
 
-# Create evaluator with TokenOverlapJudge (default)
-evaluator = Evaluator(
-    retriever=my_retriever,
-    metrics=[HitRate(k=4), Recall(k=4), Precision(k=4), MRR(k=4)]
-)
 
-# Evaluate
-results = evaluator.evaluate(dataset)
+class KeywordRetriever(BaseRetriever):
+    def __init__(self, documents):
+        self.documents = documents
 
-# View results
-print(results.summary())
-# {'hit_rate@4': 0.85, 'recall@4': 0.75, 'precision@4': 0.5, 'mrr@4': 0.92}
+    def retrieve(self, query: str, k: int) -> list[RetrievalResult]:
+        self._validate_k(k)
+        query_tokens = set(re.findall(r"[a-z0-9]+", self._validate_query(query).lower()))
+        results = []
 
-# Export
-results.to_json("results.json")
-results.to_csv("results.csv")
+        for document in self.documents:
+            doc_tokens = set(re.findall(r"[a-z0-9]+", document.text.lower()))
+            overlap = len(query_tokens & doc_tokens)
+            if overlap == 0:
+                continue
+            results.append(
+                RetrievalResult(
+                    doc_id=document.doc_id,
+                    score=overlap / max(len(query_tokens), 1),
+                    metadata={"text": document.text},
+                )
+            )
+
+        results.sort(key=lambda result: (-result.score, result.doc_id))
+        return results[:k]
 ```
 
----
+In a real app, this can be a `QdrantRetriever`, `ChromaRetriever`, `WeaviateRetriever`, `MilvusRetriever`, or your own retriever.
 
-## Using Different Judges
-
-### TokenOverlapJudge (Default)
-
-Fast keyword-based matching, no external dependencies:
-
-```python
-from evret.judges import TokenOverlapJudge
-
-judge = TokenOverlapJudge(
-    min_tokens=2,        # Minimum shared tokens
-    overlap_ratio=0.6,   # Minimum 60% overlap
-    query_boost=True     # Allow query tokens to relax threshold
-)
-
-evaluator = Evaluator(
-    retriever=my_retriever,
-    metrics=[Recall(k=4)],
-    judge=judge
-)
-```
-
-**Best for:**
-- Quick evaluation
-- Keyword-based relevance
-- No API costs
-
-### SemanticJudge
-
-Embedding-based semantic similarity:
-
-```python
-from evret.judges import SemanticJudge
-
-judge = SemanticJudge(
-    model="sentence-transformers/all-MiniLM-L6-v2",
-    threshold=0.75,  # Cosine similarity threshold
-    device="cpu"     # or "cuda"
-)
-
-evaluator = Evaluator(
-    retriever=my_retriever,
-    metrics=[Recall(k=4)],
-    judge=judge
-)
-```
-
-**Best for:**
-- Semantic similarity matching
-- No API costs
-- Better accuracy than token overlap
-
-### LLMJudge
-
-LLM-powered semantic judgment (highest accuracy):
-
-```python
-from evret.judges import LLMJudge
-
-# OpenAI
-judge = LLMJudge(
-    provider="openai",
-    model="gpt-4o-mini",  # or gpt-4o
-    api_key=None,         # or pass a key directly
-    temperature=0.0,
-    max_retries=3,
-)
-
-# Anthropic
-judge = LLMJudge(
-    provider="anthropic",
-    model="claude-3-5-haiku-20241022",
-    api_key=None,
-    temperature=0.0,
-    max_retries=3,
-)
-
-# Google Gen AI
-judge = LLMJudge(
-    provider="google",
-    model="gemini-2.5-flash",
-    api_key=None,
-    temperature=0.0,
-    max_retries=3,
-)
-
-evaluator = Evaluator(
-    retriever=my_retriever,
-    metrics=[Recall(k=4)],
-    judge=judge
-)
-```
-
-**Best for:**
-- Maximum accuracy
-- Complex reasoning
-- Paraphrase detection
-
----
-
-## Comparison Table
-
-| Judge | Speed | Accuracy | Cost | Dependencies |
-|-------|-------|----------|------|--------------|
-| **TokenOverlapJudge** | Fastest | Good | Free | None |
-| **SemanticJudge** | Medium | Better | Free | sentence-transformers |
-| **LLMJudge** | Slowest | Best | API cost | openai/anthropic/google-genai |
-
-## Judge Parameters
-
-| Judge | Parameters |
-| --- | --- |
-| `TokenOverlapJudge` | `min_tokens`, `overlap_ratio`, `query_boost` |
-| `SemanticJudge` | `model`, `threshold`, `device` |
-| `LLMJudge` | `provider`, `model`, `api_key`, `temperature`, `max_retries` |
-
-See [Judges](judges.md) for full parameter details and provider defaults.
-
----
-
-## Custom Judge
-
-Implement your own matching logic:
-
-```python
-from evret.judges.base import Judge, JudgmentContext
-
-class ExactMatchJudge(Judge):
-    """Match only if texts are exactly the same (case-insensitive)."""
-
-    @property
-    def name(self) -> str:
-        return "exact_match"
-
-    def judge(self, context: JudgmentContext) -> bool:
-        return context.expected_text.lower() == context.retrieved_text.lower()
-
-# Use it
-evaluator = Evaluator(
-    retriever=my_retriever,
-    metrics=[Recall(k=4)],
-    judge=ExactMatchJudge()
-)
-```
-
----
-
-## Complete Example
+## 3. Run Evaluation
 
 ```python
 from evret import (
+    AveragePrecision,
     EvaluationDataset,
     Evaluator,
     HitRate,
-    Recall,
-    Precision,
     MRR,
     NDCG,
+    Precision,
+    Recall,
+    TokenOverlapJudge,
 )
-from evret.judges import TokenOverlapJudge
 
-# 1. Load dataset
 dataset = EvaluationDataset.from_json("eval_data.json")
+retriever = KeywordRetriever(dataset.documents)
 
-# 2. Create judge
-judge = TokenOverlapJudge(min_tokens=2, overlap_ratio=0.6)
-
-# 3. Define metrics
-metrics = [
-    HitRate(k=4),
-    Recall(k=4),
-    Precision(k=4),
-    MRR(k=4),
-    NDCG(k=4),
-]
-
-# 4. Create evaluator
 evaluator = Evaluator(
-    retriever=my_retriever,
-    metrics=metrics,
-    judge=judge
+    retriever=retriever,
+    metrics=[
+        HitRate(k=2),
+        Recall(k=2),
+        Precision(k=2),
+        MRR(k=2),
+        NDCG(k=2),
+        AveragePrecision(k=2),
+    ],
+    judge=TokenOverlapJudge(min_tokens=2, overlap_ratio=0.6),
 )
 
-# 5. Evaluate
 results = evaluator.evaluate(dataset)
-
-# 6. Results
-print(f"Evaluated {results.query_count} queries")
-print(f"Results: {results.summary()}")
+print(results.summary())
 
 results.to_json("results.json")
 results.to_csv("results.csv")
 ```
 
----
+`Evaluator` calls the retriever once per query using the largest `k` from your metric list. Then it computes each metric over the same retrieved results.
+
+## 4. Read The Scores
+
+Metric names include their cutoff:
+
+```python
+{
+    "hit_rate@2": 1.0,
+    "recall@2": 1.0,
+    "precision@2": 0.5,
+    "mrr@2": 1.0,
+    "ndcg@2": 1.0,
+    "average_precision@2": 1.0,
+}
+```
+
+The exact numbers depend on your retriever and judge. Every built-in metric returns a score between `0.0` and `1.0`.
+
+## Choose Metrics
+
+| Goal | Metric |
+| --- | --- |
+| Check if any relevant result appears | `HitRate` |
+| Check how much relevant content is recovered | `Recall` |
+| Check how clean the returned context is | `Precision` |
+| Check how early the first relevant hit appears | `MRR` |
+| Check ranking quality across positions | `NDCG` |
+| Check rank-aware precision over relevant hits | `AveragePrecision` |
+
+## Choose A Judge
+
+`Evaluator` defaults to `TokenOverlapJudge()`. Pass `judge=` when you want explicit matching behavior.
+
+```python
+from evret.judges import LLMJudge, SemanticJudge, TokenOverlapJudge
+
+token_judge = TokenOverlapJudge(min_tokens=2, overlap_ratio=0.6)
+semantic_judge = SemanticJudge(threshold=0.75)
+llm_judge = LLMJudge(provider="openai", model="gpt-4o-mini")
+```
+
+| Judge | Best For |
+| --- | --- |
+| `TokenOverlapJudge` | Fast local checks with no external dependency |
+| `SemanticJudge` | Embedding similarity and paraphrase tolerance |
+| `LLMJudge` | Complex semantic judgment with an LLM provider |
 
 ## Next Steps
 
-- Read [Architecture Guide](architecture.md) for design details
-- See the repository `examples/` directory for complete working code
-- Check [API Reference](api/package.md) for detailed documentation
-
----
-
-## Tips
-
-### Choosing the Right Judge
-
-1. **Start with TokenOverlapJudge** - Fast and good enough for most cases
-2. **Upgrade to SemanticJudge** - If you need better semantic matching
-3. **Use LLMJudge** - For final production evaluation or when accuracy is critical
-
-### Performance Optimization
-
-- Use `batch_judge()` for bulk evaluation (done automatically)
-- Cache embeddings for SemanticJudge if evaluating multiple times
-- Use `gpt-4o-mini` for LLMJudge to reduce costs
-
-### Debugging
-
-```python
-# Print judge decisions
-contexts = [
-    JudgmentContext(
-        query="test query",
-        expected_text="expected",
-        retrieved_text="retrieved"
-    )
-]
-decisions = judge.batch_judge(contexts)
-print(f"Judge: {judge.name}")
-print(f"Decisions: {decisions}")
-```
-
----
+- Read [Metrics Overview](metrics/index.md) for formulas.
+- Read [Dataset Format](evaluation/dataset-format.md) for JSON and CSV fields.
+- Read [Retriever Overview](retrievers/overview.md) to connect a vector database.
+- Read [Judges](judges.md) for judge parameters.

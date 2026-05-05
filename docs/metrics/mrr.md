@@ -12,28 +12,33 @@ It only cares about the first relevant hit.
 
 ## Mathematical Formula
 
-$$
-MRR = \frac{1}{|Q|} \sum_{i=1}^{|Q|} \frac{1}{\text{rank}_i}
-$$
+For query \(i\):
 
-For a single query:
+\[
+\operatorname{RR@}k_i =
+\begin{cases}
+\frac{1}{\operatorname{rank}_i}, & \text{if the first relevant result appears in top-}k \\
+0, & \text{otherwise}
+\end{cases}
+\]
 
-$$
-RR = \frac{1}{\text{rank of first relevant doc}}
-\quad \Rightarrow \quad
-RR_{\text{rank=1}} = 1.0, \quad RR_{\text{rank=2}} = 0.5, \quad RR_{\text{rank=5}} = 0.2
-$$
+Across all queries:
 
-If no relevant document appears in top-`k`, reciprocal rank is `0`.
+\[
+\operatorname{MRR@}k =
+\frac{1}{|Q|}
+\sum_{i=1}^{|Q|}
+\operatorname{RR@}k_i
+\]
 
 ## Formula Breakdown
 
-- `|Q|`: total number of queries
-- `rank_i`: 1-based rank of first relevant doc for query `i`
+- \(Q\): set of evaluation queries
+- \(\operatorname{rank}_i\): 1-based rank of the first relevant result for query \(i\)
 - Rank 1 gives score `1.0`
 - Rank 2 gives score `0.5`
 - Rank 5 gives score `0.2`
-- No hit gives `0`
+- No relevant result in top-`k` gives `0`
 
 ## Worked Example
 
@@ -43,16 +48,22 @@ Given:
 - `retrieved@5 = [d1, d4, d2, d9, d8]`
 - `relevant = {d2, d8, d10}`
 
-Step 1: first relevant hit is `d2` at rank `3`
+Step 1: first relevant hit is `d2` at rank `3`.
 
-Step 2: `RR@5(query) = 1 / 3 = 0.3333`
+\[
+\operatorname{RR@}5 = \frac{1}{3} = 0.3333
+\]
 
 If query scores over 3 queries are `[1.0, 0.5, 0.3333]`, then:
 
-`MRR@k = (1.0 + 0.5 + 0.3333) / 3 = 0.6111`
+\[
+\operatorname{MRR@}k =
+\frac{1.0 + 0.5 + 0.3333}{3}
+= 0.6111
+\]
 
 ## When To Use
 
-- Single answer QA
+- Single-answer QA
 - Search experience where users click early results
 - Compare retrievers on first hit speed

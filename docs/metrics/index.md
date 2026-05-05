@@ -1,6 +1,6 @@
 # Metrics Overview
 
-This section explains each retrieval metric in plain words.
+Evret metrics score ranked retrieval results at a top-`k` cutoff.
 
 Each metric answers a different question. Use the metric that matches your product goal.
 
@@ -19,8 +19,9 @@ Each metric answers a different question. Use the metric that matches your produ
 
 For one query, define:
 
-- `retrieved@k`: first `k` retrieved document ids
-- `relevant`: set of ground truth relevant ids
+- \(R_i^{(k)}\): first `k` retrieved document ids for query \(i\)
+- \(G_i\): ground truth relevant ids for query \(i\)
+- \(Q\): set of evaluation queries
 
 Most metric pages in this section use this small example:
 
@@ -34,11 +35,24 @@ In that case, relevant hits in top 5 are `d2` and `d8`.
 
 Evret computes each metric for every query, then returns the average.
 
-For `N` queries:
+For \(|Q|\) queries:
 
-`final_score = (score_query_1 + score_query_2 + ... + score_query_N) / N`
+\[
+\operatorname{score} =
+\frac{1}{|Q|}
+\sum_{i=1}^{|Q|}
+\operatorname{score}_i
+\]
 
 This is why each metric class has:
 
 - `score_query(...)` for one query
 - `score(...)` for a list of queries
+
+## Implementation Notes
+
+- Hit Rate, Recall, Precision, MRR, nDCG, and Average Precision all return scores from `0.0` to `1.0`.
+- nDCG currently uses binary relevance, where relevant ids have relevance `1.0`.
+- Precision divides by the configured `k`, not by the number of returned results.
+- Average Precision divides by the total number of relevant ids for the query.
+- Empty relevant sets score `0.0`.

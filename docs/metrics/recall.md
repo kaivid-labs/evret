@@ -6,35 +6,42 @@ Recall answers:
 
 "Out of all relevant documents, how many did we retrieve in top-k?"
 
-It focuses on coverage.
+It focuses on coverage. High recall means the retriever found most of the relevant evidence.
 
 ## Mathematical Formula
 
-Recall@k for a single query:
+For query \(i\):
 
-$$
-\text{Recall@}k = \frac{|\text{relevant docs} \cap \text{retrieved top-}k|}{|\text{relevant docs}|}
-$$
+\[
+\operatorname{Recall@}k_i =
+\frac{|G_i \cap R_i^{(k)}|}{|G_i|}
+\]
 
-Mean Recall@k across all queries:
+Across all queries:
 
-$$
-\text{Mean Recall@}k = \frac{1}{|Q|} \sum_{i=1}^{|Q|} \text{Recall@}k_i
-$$
+\[
+\operatorname{MeanRecall@}k =
+\frac{1}{|Q|}
+\sum_{i=1}^{|Q|}
+\operatorname{Recall@}k_i
+\]
 
-Recall ceiling when `k` is smaller than the number of relevant docs:
+When \(k\) is smaller than the number of relevant documents, recall has a ceiling:
 
-$$
-\text{Recall@}k \leq \frac{k}{|\text{relevant docs}|} \quad \text{(when } k < |\text{relevant docs}| \text{)}
-$$
+\[
+\operatorname{Recall@}k_i \leq \frac{k}{|G_i|}
+\quad \text{when } k < |G_i|
+\]
 
 ## Formula Breakdown
 
-- `|Q|`: total number of queries
-- `|relevant ∩ retrieved@k|`: number of relevant hits in top-`k`
-- `|relevant|`: total number of relevant docs for that query
-- Query score range is `0` to `1`
-- If `relevant` is empty, Evret returns `0.0` for that query
+- \(Q\): set of evaluation queries
+- \(G_i\): ground truth relevant ids for query \(i\)
+- \(R_i^{(k)}\): first \(k\) retrieved ids for query \(i\)
+- \(|G_i \cap R_i^{(k)}|\): number of relevant hits in top-`k`
+- \(|G_i|\): total relevant ids for that query
+
+Evret returns `0.0` for a query when its relevant set is empty.
 
 ## Worked Example
 
@@ -44,14 +51,16 @@ Given:
 - `retrieved@5 = [d1, d4, d2, d9, d8]`
 - `relevant = {d2, d8, d10}`
 
-Step 1: relevant hits in top 5 are `{d2, d8}` so hits = `2`
+Step 1: relevant hits in top 5 are `{d2, d8}`, so hits = `2`.
 
-Step 2: total relevant ids = `3`
+Step 2: total relevant ids = `3`.
 
-Step 3: `Recall@5(query) = 2 / 3 = 0.6667`
+\[
+\operatorname{Recall@}5 = \frac{2}{3} = 0.6667
+\]
 
 ## When To Use
 
-- Multi document QA
+- Multi-document QA
 - Domains where missing information is risky
 - Comparing retrievers for completeness

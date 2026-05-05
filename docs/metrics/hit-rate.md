@@ -4,32 +4,40 @@
 
 Hit Rate answers one question:
 
-"Did we get at least one relevant document in top-k?"
+"Did we retrieve at least one relevant document in the top-k results?"
 
-It does not care whether the first hit is at rank 1 or rank 5.
+It does not care whether the first hit is at rank 1 or rank 5. A query gets `1` when any relevant item appears in top-`k`, otherwise it gets `0`.
 
 ## Mathematical Formula
 
-$$
-\text{Hit Rate} = \frac{1}{|Q|} \sum_{i=1}^{|Q|} \mathbb{1}\left[\text{rel}_i \cap \text{retrieved}_i^{(k)} \neq \emptyset\right]
-$$
+For query \(i\):
 
-For a single query:
-
-$$
-\text{Hit}_i =
+\[
+\operatorname{Hit@}k_i =
 \begin{cases}
-1 & \text{if any relevant doc appears in top-}k \\
-0 & \text{otherwise}
+1, & \text{if } G_i \cap R_i^{(k)} \neq \varnothing \\
+0, & \text{otherwise}
 \end{cases}
-$$
+\]
+
+Across all queries:
+
+\[
+\operatorname{HitRate@}k =
+\frac{1}{|Q|}
+\sum_{i=1}^{|Q|}
+\operatorname{Hit@}k_i
+\]
 
 ## Formula Breakdown
 
-- `|Q|`: total number of queries
-- `rel_i`: ground truth relevant set for query `i`
-- `retrieved_i^(k)`: top-`k` retrieved set for query `i`
-- `1[ ... ]`: indicator function (`1` if true, else `0`)
+- \(Q\): set of evaluation queries
+- \(G_i\): ground truth relevant ids for query \(i\)
+- \(R_i^{(k)}\): first \(k\) retrieved ids for query \(i\)
+- \(G_i \cap R_i^{(k)}\): relevant ids found in the top-`k`
+- \(\varnothing\): empty set
+
+Evret returns `0.0` for a query when its relevant set is empty or no retrieved result matches.
 
 ## Worked Example
 
@@ -39,15 +47,15 @@ Given:
 - `retrieved@5 = [d1, d4, d2, d9, d8]`
 - `relevant = {d2, d8, d10}`
 
-Step 1: intersection is `{d2, d8}`
+Step 1: intersection is `{d2, d8}`.
 
-Step 2: intersection is not empty, so query score is `1`
-
-If another query has no overlap, that query score is `0`.
+Step 2: intersection is not empty, so query score is `1`.
 
 If scores over 4 queries are `[1, 0, 1, 1]`, final Hit Rate is:
 
-`(1 + 0 + 1 + 1) / 4 = 0.75`
+\[
+\frac{1 + 0 + 1 + 1}{4} = 0.75
+\]
 
 ## When To Use
 

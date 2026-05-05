@@ -1,178 +1,94 @@
 # Evret Documentation
 
-**Evret** - An information retrieval evaluation framework with text-based semantic matching.
+Evret is a lightweight Python framework for evaluating retrievers in RAG and search systems.
 
----
+It provides standard Information Retrieval metrics, a judge system for text-based relevance matching, and retriever adapters for common vector databases.
 
-## What is Evret?
+## What Evret Does
 
-Evret is a modern Python framework for evaluating retrieval systems in RAG (Retrieval-Augmented Generation) pipelines. Unlike traditional evaluation frameworks that rely on document IDs, Evret supports **text-based relevance matching** for real-world scenarios.
+Evret turns retrieved results into metric scores:
 
-### Key Features
+1. Load an evaluation dataset.
+2. Ask your retriever for top-`k` results.
+3. Match retrieved content against gold labels with a judge.
+4. Compute IR metrics over the matched relevant ids.
+5. Export a summary to JSON or CSV.
 
-- **Standard IR Metrics**: Hit Rate, Recall, Precision, MRR, NDCG, Average Precision
-- **Judge System**: TokenOverlap, Semantic, and LLM-based matching
-- **Production Ready**: Text-based evaluation for real RAG systems
-- **Vector DB Support**: Native adapters for Qdrant, Chroma, Weaviate, Milvus
-- **Framework Integration**: Seamless adapters for LangChain and LlamaIndex
-- **Type Safe**: Fully typed with comprehensive test coverage
+The evaluator supports two relevance styles:
 
----
+- `relevant_doc_ids` for classic IR evaluation with known document ids
+- `expected_answers` for judge-based RAG evaluation with gold text snippets
+
+## Key Features
+
+- **Standard IR metrics**: Hit Rate, Recall, Precision, MRR, nDCG, and Average Precision
+- **Judge-based matching**: token overlap by default, with optional semantic and LLM judges
+- **Vector database support**: Qdrant, Chroma, Weaviate, and Milvus retrievers
+- **Framework integrations**: LangChain and LlamaIndex adapters
+- **Simple result exports**: `summary()`, `to_json()`, and `to_csv()`
 
 ## Quick Example
 
 ```python
-from evret import EvaluationDataset, Evaluator, HitRate, Recall, MRR
-from evret.judges import TokenOverlapJudge
+from evret import EvaluationDataset, Evaluator, HitRate, MRR, NDCG, TokenOverlapJudge
 
-# Load dataset with text-based labels
 dataset = EvaluationDataset.from_json("eval_data.json")
 
-# Create evaluator with judge
 evaluator = Evaluator(
     retriever=my_retriever,
-    metrics=[HitRate(k=4), Recall(k=4), MRR(k=4)],
-    judge=TokenOverlapJudge()  # Text-based matching
+    metrics=[HitRate(k=4), MRR(k=4), NDCG(k=4)],
+    judge=TokenOverlapJudge(min_tokens=2, overlap_ratio=0.6),
 )
 
-# Evaluate
 results = evaluator.evaluate(dataset)
 print(results.summary())
-# {'hit_rate@4': 0.85, 'recall@4': 0.75, 'mrr@4': 0.92}
 ```
 
----
+## Metrics
 
-## Three Judge Types
+| Metric | What It Answers | Best Use |
+| --- | --- | --- |
+| Hit Rate@k | Did at least one relevant result appear? | Basic retrieval sanity checks |
+| Recall@k | How much relevant content was found? | Coverage and completeness |
+| Precision@k | How clean are the top-k results? | LLM context quality |
+| MRR@k | How early is the first relevant result? | Single-answer QA |
+| nDCG@k | Are relevant results ranked high? | Ranking and reranker quality |
+| Average Precision@k | How good is precision across relevant ranks? | Benchmark-style ranking comparison |
 
-Evret supports three types of judges for text-based relevance matching:
+See [Metrics Overview](metrics/index.md) for formulas and examples.
 
-### 1. TokenOverlapJudge (Default)
-Fast keyword/token-based matching with configurable thresholds.
+## Judges
 
-```python
-from evret.judges import TokenOverlapJudge
+Judges decide whether retrieved text matches the expected text in your dataset. `Evaluator` uses `TokenOverlapJudge()` by default.
 
-judge = TokenOverlapJudge(
-    min_tokens=2,
-    overlap_ratio=0.6,
-    query_boost=True,
-)
-```
+| Judge | Best For | Dependency |
+| --- | --- | --- |
+| `TokenOverlapJudge` | Fast local checks | none |
+| `SemanticJudge` | Embedding similarity | `evret[semantic]` |
+| `LLMJudge` | Complex paraphrase matching | LLM provider extra |
 
-**Best for**: Quick evaluation, keyword-based relevance, no external dependencies
-
-### 2. SemanticJudge
-Embedding-based semantic similarity using sentence-transformers.
-
-```python
-from evret.judges import SemanticJudge
-
-judge = SemanticJudge(
-    model="sentence-transformers/all-MiniLM-L6-v2",
-    threshold=0.75,
-    device="cpu",
-)
-```
-
-**Best for**: Semantic similarity, better accuracy, no API costs
-
-### 3. LLMJudge
-LLM-powered semantic judgment (OpenAI, Anthropic, Google Gen AI).
-
-```python
-from evret.judges import LLMJudge
-
-judge = LLMJudge(
-    provider="openai",
-    model="gpt-4o-mini",
-    api_key=None,
-    temperature=0.0,
-    max_retries=3,
-)
-```
-
-**Best for**: Maximum accuracy, complex reasoning, paraphrase detection
-
----
-
-## Judge Comparison
-
-| Judge | Speed | Accuracy | Cost | Dependencies |
-|-------|-------|----------|------|--------------|
-| **TokenOverlapJudge** | Fastest | Good | Free | None |
-| **SemanticJudge** | Medium | Better | Free | sentence-transformers |
-| **LLMJudge** | Slowest | Best | API cost | openai/anthropic/google-genai |
-
----
+See [Judges](judges.md) for parameters and provider defaults.
 
 ## Installation
 
 ```bash
-# Core package (includes TokenOverlapJudge)
 pip install evret
-
-# With semantic judge
-pip install evret[semantic]
-
-# With LLM judges
-pip install evret[llm-openai]      # OpenAI
-pip install evret[llm-anthropic]   # Anthropic
-pip install evret[llm-google]      # Google Gen AI
-
-# Everything
-pip install evret[all]
 ```
 
----
+Optional extras:
 
-## Documentation Structure
-
-### Getting Started
-- **[Quickstart Guide](quickstart.md)** - Get up and running in 5 minutes
-- **[Judge Guide](judges.md)** - Configure TokenOverlap, Semantic, and LLM judges
-- **[Architecture Overview](architecture.md)** - Understand the judge system design
-
-### Core Guides
-- [Metrics](metrics/index.md) - IR metrics reference
-- [Evaluation](evaluation/overview.md) - Dataset and evaluation
-- [Retrievers](retrievers/overview.md) - Retriever implementations
-- [Integrations](integrations/overview.md) - Framework integrations
-
-### Reference
-- [API Reference](api/package.md) - Detailed API documentation
-
----
-
-## Why Evret?
-
-### Real-World RAG Evaluation
-
-Traditional evaluation frameworks require pre-labeled document IDs:
-
-```python
-# ID-only approach (classic IR)
-relevant_doc_ids = ["doc_123", "doc_456"]
+```bash
+pip install "evret[qdrant]"
+pip install "evret[langchain]"
+pip install "evret[semantic]"
+pip install "evret[all]"
 ```
 
-Evret also works with **actual text content** for judge-based evaluation:
+## Docs Map
 
-```python
-# Text-based approach (judge-based)
-expected_answers = [
-    "RAG combines retrieval with generation for better accuracy",
-    "Retrieval-augmented generation improves LLM responses"
-]
-```
-
-### Clean Architecture
-
-Evret separates concerns:
-
-```
-User data (text) -> Judge (matching) -> Evaluator (mapping) -> Metrics (IR math)
-```
-
-- **Judges** handle: "Does this text match that text?"
-- **Metrics** handle: "How good is the ranking?"
-- **Clean separation** = Extensible, testable, maintainable
+- [Quickstart](quickstart.md): end-to-end first evaluation
+- [Metrics](metrics/index.md): metric formulas and examples
+- [Evaluation](evaluation/overview.md): evaluator flow and result object
+- [Retrievers](retrievers/overview.md): retriever contract and backend guides
+- [Integrations](integrations/overview.md): framework adapters
+- [API Reference](api/package.md): generated API docs
