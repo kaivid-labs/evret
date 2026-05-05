@@ -1,5 +1,5 @@
 site_name: Evret
-site_description: Retriever evaluation framework for RAG and search systems
+site_description: Retriever evaluation framework for Information retreival and search systems
 site_url: https://docs.kaividlabs.com/evret
 repo_name: evret
 repo_url: https://github.com/kaivid-labs/evret
