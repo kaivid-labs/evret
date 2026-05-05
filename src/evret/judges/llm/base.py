@@ -3,10 +3,14 @@
 from __future__ import annotations
 
 import asyncio
+import time
 
 from evret.judges.base import Judge, JudgmentContext
 from evret.judges.llm.factory import llm_provider_factory
 from evret.judges.llm.prompts import RELEVANCE_PROMPT_TEMPLATE
+from evret.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 class LLMJudge(Judge):
@@ -96,7 +100,19 @@ class LLMJudge(Judge):
         """
         if not contexts:
             return []
-        return asyncio.run(self._abatch_judge(contexts))
+
+        logger.info(f"LLM judge: starting batch of {len(contexts)} judgments")
+        start_time = time.perf_counter()
+
+        results = asyncio.run(self._abatch_judge(contexts))
+
+        elapsed = time.perf_counter() - start_time
+        logger.info(
+            f"LLM judge: completed {len(contexts)} judgments in {elapsed:.2f}s "
+            f"({elapsed/len(contexts):.3f}s per judgment)"
+        )
+
+        return results
 
     async def _abatch_judge(self, contexts: list[JudgmentContext]) -> list[bool]:
         """Internal async batch implementation."""

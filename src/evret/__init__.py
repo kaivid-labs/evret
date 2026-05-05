@@ -12,6 +12,7 @@ from evret.evaluation import (
 from evret.errors import EvretError, EvretValidationError, OptionalDependencyError
 from evret.integrations import LangChainRetrieverAdapter, LlamaIndexRetrieverAdapter
 from evret.judges import Judge, JudgmentContext, TokenOverlapJudge
+from evret.logging import get_logger
 from evret.metrics import AveragePrecision, HitRate, MRR, NDCG, Precision, Recall
 from evret.retrievers import (
     BaseRetriever,
@@ -38,6 +39,7 @@ __all__ = [
     "Evaluator",
     "EvretError",
     "EvretValidationError",
+    "get_logger",
     "HitRate",
     "Judge",
     "JudgmentContext",

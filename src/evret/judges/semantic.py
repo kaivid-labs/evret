@@ -2,8 +2,13 @@
 
 from __future__ import annotations
 
+import time
+
 from evret.errors import EvretValidationError, OptionalDependencyError
 from evret.judges.base import Judge, JudgmentContext
+from evret.logging import get_logger
+
+logger = get_logger(__name__)
 
 try:
     from sentence_transformers import SentenceTransformer
@@ -49,7 +54,10 @@ class SemanticJudge(Judge):
         self.model_name = model
         self.threshold = threshold
         self.device = device
+
+        logger.info(f"Loading embedding model: {model} on {device}")
         self._model = SentenceTransformer(model, device=device)
+        logger.debug(f"Model loaded: {model}")
 
     @property
     def name(self) -> str:
@@ -84,6 +92,9 @@ class SemanticJudge(Judge):
         if not contexts:
             return []
 
+        logger.debug(f"Semantic judge: encoding {len(contexts)} pairs")
+        start_time = time.perf_counter()
+
         expected_texts = [ctx.expected_text for ctx in contexts]
         retrieved_texts = [ctx.retrieved_text for ctx in contexts]
 
@@ -91,7 +102,15 @@ class SemanticJudge(Judge):
         retrieved_embs = self._model.encode(retrieved_texts, convert_to_numpy=True)
 
         similarities = self._batch_cosine_similarity(expected_embs, retrieved_embs)
-        return [float(sim) >= self.threshold for sim in similarities]
+        results = [float(sim) >= self.threshold for sim in similarities]
+
+        elapsed = time.perf_counter() - start_time
+        logger.debug(
+            f"Semantic judge: {len(contexts)} judgments in {elapsed:.2f}s "
+            f"({elapsed/len(contexts):.3f}s per judgment)"
+        )
+
+        return results
 
     def _compute_similarity(self, text1: str, text2: str) -> float:
         """Compute cosine similarity between two texts."""

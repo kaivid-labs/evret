@@ -1,7 +1,7 @@
 """Evaluation orchestrator for retriever metrics."""
 
 from __future__ import annotations
-
+import time
 from collections.abc import Sequence
 
 from evret.errors import EvretValidationError
@@ -9,9 +9,12 @@ from evret.evaluation.dataset import EvaluationDataset
 from evret.evaluation.results import EvaluationResults
 from evret.judges.base import Judge, JudgmentContext
 from evret.judges.token_overlap import TokenOverlapJudge
+from evret.logging import get_logger
 from evret.metrics import Metric
 from evret.retrievers import BaseRetriever, RetrievalResult
 from evret.utils import find_duplicates
+
+logger = get_logger(__name__)
 
 
 class Evaluator:
@@ -65,6 +68,15 @@ class Evaluator:
             raise EvretValidationError("dataset must contain at least one query")
 
         max_k = max(metric.k for metric in self.metrics)
+        query_count = len(dataset.queries)
+        metric_names = [m.name for m in self.metrics]
+
+        logger.info(
+            f"Starting evaluation: {query_count} queries, max_k={max_k}, "
+            f"metrics={metric_names}, judge={self.judge.name}"
+        )
+        start_time = time.perf_counter()
+
         retrieved_results = self.retriever.batch_retrieve(
             queries=[query.query_text for query in dataset.queries],
             k=max_k,
@@ -73,6 +85,10 @@ class Evaluator:
             raise EvretValidationError(
                 "retriever returned a different number of query results than input queries"
             )
+
+        retrieval_time = time.perf_counter() - start_time
+        logger.debug(f"Retrieval completed in {retrieval_time:.2f}s")
+
         retrieved_ids, relevant_sets = self._build_metric_inputs(
             dataset=dataset,
             retrieved_results=retrieved_results,
@@ -84,6 +100,9 @@ class Evaluator:
                 retrieved_by_query=retrieved_ids,
                 relevant_by_query=relevant_sets,
             )
+
+        total_time = time.perf_counter() - start_time
+        logger.info(f"Evaluation complete in {total_time:.2f}s: {metric_scores}")
 
         return EvaluationResults(
             metric_scores=metric_scores,
