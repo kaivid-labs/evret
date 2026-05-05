@@ -1,6 +1,5 @@
 """
 Create evaluation dataset when you don't have one.
-
 The judge automatically determines if retrieved docs match your expected answers.
 You don't label document IDs - you just provide the answer text you expect.
 """
@@ -70,9 +69,9 @@ def save_dataset(dataset: EvaluationDataset, filename: str):
             for d in dataset.documents
         ]
     }
-
     Path(filename).write_text(json.dumps(output, indent=2))
 
 if __name__ == "__main__":
     dataset = create_dataset_manually()
     save_dataset(dataset, "my_eval_dataset.json")
+    print("Saved my_eval_dataset.json")

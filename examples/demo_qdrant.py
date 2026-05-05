@@ -1,4 +1,6 @@
-"""Minimal example of evaluating a Qdrant retriever with evret."""
+"""Minimal example of evaluating a Qdrant retriever with evret.
+pip install fastembed pypdfium2 evret[qdrant]
+"""
 from fastembed import TextEmbedding
 import pypdfium2 as pdfium
 from qdrant_client import QdrantClient, models
@@ -63,6 +65,7 @@ def main():
     # Create dataset and index documents
     dataset = create_dataset(chunks)
     retriever = index_documents(chunks, collection_name="react_paper")
+    print("Indexing done")
     # Run evaluation
     metrics = [HitRate(k=5), Precision(k=5), Recall(k=5), MRR(k=5), NDCG(k=5)]
     judge = TokenOverlapJudge(min_tokens=10, overlap_ratio=0.5)

@@ -32,7 +32,10 @@ qdrant = ["qdrant-client>=1.9.0"]
 chroma = ["chromadb>=0.5.0"]
 weaviate = ["weaviate-client>=4.16.0"]
 milvus = ["pymilvus>=2.4.0"]
-langchain = ["langchain>=0.2.0"]
+langchain = [
+  "langchain>=0.2.0",
+  "langchain-community==0.4.1",
+]
 llamaindex = ["llama-index-core>=0.10.0"]
 semantic = ["sentence-transformers>=2.2.0"]
 llm-openai = ["openai>=1.0.0"]
@@ -55,6 +58,7 @@ all = [
   "weaviate-client>=4.16.0",
   "pymilvus>=2.4.0",
   "langchain>=0.2.0",
+  "langchain-community==0.4.1",
   "llama-index-core>=0.10.0",
   "sentence-transformers>=2.2.0",
   "openai>=1.0.0",
@@ -68,6 +72,7 @@ integration = [
   "weaviate-client>=4.16.0",
   "pymilvus>=2.4.0",
   "langchain>=0.2.0",
+  "langchain-community==0.4.1",
   "llama-index-core>=0.10.0",
   "testcontainers>=4.8.0",
 ]

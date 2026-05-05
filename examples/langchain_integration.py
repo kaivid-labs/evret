@@ -1,7 +1,6 @@
 """Evaluate a LangChain Qdrant retriever with evret.
-pip install evret[langchain] fastembed pypdfium
+pip install "evret[langchain]" fastembed pypdfium langchain-qdrant
 """
-
 from langchain_community.document_loaders import PyPDFium2Loader
 from langchain_community.embeddings.fastembed import FastEmbedEmbeddings
 from langchain_qdrant import QdrantVectorStore
@@ -14,9 +13,7 @@ from evret.metrics import HitRate, MRR
 
 def main() -> None:
     docs = PyPDFium2Loader("react_agent_paper.pdf").load()
-    splitter = RecursiveCharacterTextSplitter(
-        chunk_size=2000,chunk_overlap=200,
-    )
+    splitter = RecursiveCharacterTextSplitter(chunk_size=2000,chunk_overlap=200,)
     chunks = splitter.split_documents(docs)
     embeddings = FastEmbedEmbeddings(model_name="BAAI/bge-small-en-v1.5")
 
