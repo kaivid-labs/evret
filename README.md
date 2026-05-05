@@ -42,10 +42,9 @@ For optional integrations:
 pip install evret[all]
 
 # Install specific integrations
-pip install evret[qdrant]
-pip install evret[langchain]
-pip install evret[semantic]
-pip install evret[llm-openai]
+pip install "evret[qdrant]"
+pip install "evret[langchain]"
+pip install "evret[semantic]"
 ```
 
 ### 5-Minute Evaluation
