@@ -21,7 +21,7 @@ retriever = ChromaRetriever(
     client=client,
 )
 
-results = retriever.retrieve("ranking metrics for rag", k=5)
+results = retriever.retrieve("ranking metrics for information retrieval", k=5)
 for item in results:
     print(item.doc_id, item.score, item.metadata.get("document"))
 ```

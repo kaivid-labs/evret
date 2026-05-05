@@ -1,6 +1,6 @@
 # Evret Documentation
 
-Evret is a lightweight Python framework for evaluating retrievers in RAG and search systems.
+Evret is a lightweight Python framework for evaluating retrievers in information retrieval and search systems.
 
 It provides standard Information Retrieval metrics, a judge system for text-based relevance matching, and retriever adapters for common vector databases.
 
@@ -17,7 +17,7 @@ Evret turns retrieved results into metric scores:
 The evaluator supports two relevance styles:
 
 - `relevant_doc_ids` for classic IR evaluation with known document ids
-- `expected_answers` for judge-based RAG evaluation with gold text snippets
+- `expected_answers` for judge-based information retrieval evaluation with gold text snippets
 
 ## Key Features
 

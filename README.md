@@ -11,7 +11,7 @@
 [![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)](https://github.com/kaivid-labs/evret/actions)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-Evret brings standard Information Retrieval metrics to your RAG and search systems. Evaluate retrievers with Hit Rate, Recall, Precision, MRR, NDCG, and Average Precision in just a few lines of code. Built for simplicity, extensibility, and seamless integration with vector databases and AI frameworks.
+Evret brings standard Information Retrieval metrics to your recommendation, RAG and search systems. Evaluate retrievers with Hit Rate, Recall, Precision, MRR, NDCG, and Average Precision in just a few lines of code. Built for simplicity, extensibility, and seamless integration with vector databases and AI frameworks.
 
 </div>
 
@@ -192,7 +192,7 @@ from evret.integrations import LangChainRetrieverAdapter
 
 # Wrap any Evret retriever for use in LangChain
 lc_retriever = LangChainRetrieverAdapter(evret_retriever=retriever, k=5)
-docs = lc_retriever.invoke("what is RAG?")
+docs = lc_retriever.invoke("what is information retrieval?")
 ```
 
 ---
@@ -266,5 +266,5 @@ If you use Evret in your research, please cite:
 ---
 
 <div align="center">
-**Built with ❤️ for the RAG and IR community**
+**Built with ❤️ for the Information Retrieval community**
 </div>

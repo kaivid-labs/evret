@@ -10,7 +10,7 @@ Evret provides adapters for common orchestration frameworks.
 from evret.integrations import LangChainRetrieverAdapter
 
 lc_retriever = LangChainRetrieverAdapter(evret_retriever=my_evret_retriever, k=5)
-docs = lc_retriever.invoke("what is rag")
+docs = lc_retriever.invoke("what is information retrieval")
 ```
 
 ## LlamaIndex Adapter

@@ -59,6 +59,6 @@ If scores over 4 queries are `[1, 0, 1, 1]`, final Hit Rate is:
 
 ## When To Use
 
-- First debugging step in RAG retrieval
+- First debugging step in information retrieval
 - Fast check after changing chunking or embeddings
 - CI sanity check to catch obvious retrieval regressions
