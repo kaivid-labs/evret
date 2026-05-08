@@ -21,7 +21,7 @@ The evaluator supports two relevance styles:
 
 ## Key Features
 
-- **Standard IR metrics**: Hit Rate, Recall, Precision, MRR, nDCG, and Average Precision
+- **Standard IR metrics**: Hit Rate, Recall, Precision, MRR, nDCG, ERR, RBP, and Average Precision
 - **Judge-based matching**: token overlap by default, with optional semantic and LLM judges
 - **Vector database support**: Qdrant, Chroma, Weaviate, and Milvus retrievers
 - **Framework integrations**: LangChain and LlamaIndex adapters
@@ -53,6 +53,8 @@ print(results.summary())
 | Precision@k | How clean are the top-k results? | LLM context quality |
 | MRR@k | How early is the first relevant result? | Single-answer QA |
 | nDCG@k | Are relevant results ranked high? | Ranking and reranker quality |
+| ERR@k | How satisfied is a user likely to be? | Graded relevance and cascade browsing |
+| RBP@k | How good are results for a patience level? | Tunable user persistence |
 | Average Precision@k | How good is precision across relevant ranks? | Benchmark-style ranking comparison |
 
 See [Metrics Overview](metrics/index.md) for formulas and examples.

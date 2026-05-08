@@ -13,6 +13,8 @@ Each metric answers a different question. Use the metric that matches your produ
 | Check how clean the top results are | Precision |
 | Check how early the first relevant hit appears | MRR |
 | Check ranking quality across positions | nDCG |
+| Check user satisfaction with graded relevance | ERR |
+| Check results quality with tunable user patience | RBP |
 | Check rank aware precision over all relevant hits | Average Precision |
 
 ## Shared Setup
@@ -51,8 +53,10 @@ This is why each metric class has:
 
 ## Implementation Notes
 
-- Hit Rate, Recall, Precision, MRR, nDCG, and Average Precision all return scores from `0.0` to `1.0`.
+- All metrics return scores from `0.0` to `1.0`.
 - nDCG currently uses binary relevance, where relevant ids have relevance `1.0`.
+- ERR supports graded relevance (0 to max_grade, default 4) and binary relevance.
+- RBP supports binary relevance and optional graded relevance (auto-normalized).
 - Precision divides by the configured `k`, not by the number of returned results.
 - Average Precision divides by the total number of relevant ids for the query.
 - Empty relevant sets score `0.0`.

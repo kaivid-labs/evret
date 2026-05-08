@@ -12,7 +12,7 @@ from evret.evaluation import (
 from evret.errors import EvretError, EvretValidationError, OptionalDependencyError
 from evret.integrations import LangChainRetrieverAdapter, LlamaIndexRetrieverAdapter
 from evret.judges import Judge, JudgmentContext, TokenOverlapJudge
-from evret.metrics import AveragePrecision, HitRate, MRR, NDCG, Precision, Recall
+from evret.metrics import AveragePrecision, ERR, HitRate, MRR, NDCG, Precision, RBP, Recall
 from evret.retrievers import (
     BaseRetriever,
     ChromaRetriever,
@@ -33,6 +33,7 @@ __all__ = [
     "BaseRetriever",
     "ChromaRetriever",
     "DocumentExample",
+    "ERR",
     "EvaluationDataset",
     "EvaluationResults",
     "Evaluator",
@@ -50,6 +51,7 @@ __all__ = [
     "Precision",
     "QueryExample",
     "QdrantRetriever",
+    "RBP",
     "Recall",
     "RetrievalResult",
     "TokenOverlapJudge",

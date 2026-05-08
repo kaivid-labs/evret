@@ -11,7 +11,7 @@
 [![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)](https://github.com/kaivid-labs/evret/actions)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-Evret brings standard Information Retrieval metrics to your recommendation, RAG and search systems. Evaluate retrievers with Hit Rate, Recall, Precision, MRR, NDCG, and Average Precision in just a few lines of code. Built for simplicity, extensibility, and seamless integration with vector databases and AI frameworks.
+Evret brings standard Information Retrieval metrics to your recommendation, RAG and search systems. Evaluate retrievers with Hit Rate, Recall, Precision, MRR, NDCG, ERR, RBP and Average Precision in just a few lines of code. Built for simplicity, extensibility, and seamless integration with vector databases and AI frameworks.
 
 </div>
 
@@ -21,7 +21,7 @@ Evret brings standard Information Retrieval metrics to your recommendation, RAG 
 
 **Evret** is a modern Python framework designed for evaluating retrieval systems in Information Retrieval pipelines and search applications. It provides:
 
-- **Standard IR Metrics**: Hit Rate, Recall, Precision, MRR, NDCG, and Average Precision
+- **Standard IR Metrics**: Hit Rate, Recall, Precision, MRR, NDCG, ERR, RBP, and Average Precision
 - **Judge-Based Matching**: Token overlap, semantic, and LLM judges for text relevance
 - **Vector Database Support**: Native adapters for Qdrant and other vector databases
 - **Framework Integration**:  Adapters for LangChain and LlamaIndex
@@ -107,6 +107,8 @@ Evret supports all standard Information Retrieval metrics:
 | **Precision@k** | % of top-k results that are relevant | Precision-focused systems |
 | **MRR@k** | Mean Reciprocal Rank of first relevant doc | Single-answer retrieval |
 | **NDCG@k** | Normalized Discounted Cumulative Gain | Rank-aware binary relevance quality |
+| **ERR@k** | Expected Reciprocal Rank with cascade satisfaction | Graded relevance and user satisfaction |
+| **RBP@k** | Rank-Biased Precision with tunable persistence | User patience and position-weighted quality |
 | **Average Precision@k** | Area under precision-recall curve | Overall ranking quality |
 
 ---
@@ -194,6 +196,27 @@ from evret.integrations import LangChainRetrieverAdapter
 lc_retriever = LangChainRetrieverAdapter(evret_retriever=retriever, k=5)
 docs = lc_retriever.invoke("what is information retrieval?")
 ```
+
+---
+
+## ⚙️ Configuration
+
+### Logging
+
+Evret uses standard Python logging. Set the log level via environment variable:
+
+```bash
+export EVRET_LOG_LEVEL=INFO    # INFO, DEBUG, WARNING, ERROR
+```
+
+Or configure programmatically:
+
+```python
+import logging
+logging.basicConfig(level=logging.INFO, format="%(levelname)s [%(name)s] %(message)s")
+```
+
+Default level is `WARNING` to avoid spamming logs in production.
 
 ---
 

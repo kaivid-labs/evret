@@ -102,12 +102,14 @@ In a real app, this can be a `QdrantRetriever`, `ChromaRetriever`, `WeaviateRetr
 ```python
 from evret import (
     AveragePrecision,
+    ERR,
     EvaluationDataset,
     Evaluator,
     HitRate,
     MRR,
     NDCG,
     Precision,
+    RBP,
     Recall,
     TokenOverlapJudge,
 )
@@ -123,6 +125,8 @@ evaluator = Evaluator(
         Precision(k=2),
         MRR(k=2),
         NDCG(k=2),
+        ERR(k=2),
+        RBP(k=2),
         AveragePrecision(k=2),
     ],
     judge=TokenOverlapJudge(min_tokens=2, overlap_ratio=0.6),
@@ -148,6 +152,8 @@ Metric names include their cutoff:
     "precision@2": 0.5,
     "mrr@2": 1.0,
     "ndcg@2": 1.0,
+    "err@2": 0.0625,
+    "rbp@2": 0.2,
     "average_precision@2": 1.0,
 }
 ```
@@ -163,6 +169,8 @@ The exact numbers depend on your retriever and judge. Every built-in metric retu
 | Check how clean the returned context is | `Precision` |
 | Check how early the first relevant hit appears | `MRR` |
 | Check ranking quality across positions | `NDCG` |
+| Check user satisfaction with graded relevance | `ERR` |
+| Check result quality with tunable user patience | `RBP` |
 | Check rank-aware precision over relevant hits | `AveragePrecision` |
 
 ## Choose A Judge

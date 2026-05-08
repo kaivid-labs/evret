@@ -23,7 +23,7 @@ uv pip install -e ".[docs]"
 ## First Metric Run
 
 ```python
-from evret.metrics import HitRate, Recall, Precision, MRR, NDCG, AveragePrecision
+from evret.metrics import AveragePrecision, ERR, HitRate, MRR, NDCG, Precision, RBP, Recall
 
 retrieved = [
     ["d1", "d3", "d2", "d5"],
@@ -40,6 +40,8 @@ metrics = [
     Precision(k=3),
     MRR(k=3),
     NDCG(k=3),
+    ERR(k=3),
+    RBP(k=3),
     AveragePrecision(k=3),
 ]
 

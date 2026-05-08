@@ -71,7 +71,7 @@ Evret implements a **judge-based architecture** for text-based relevance matchin
 │  - Precision@k = |relevant ∩ retrieved[:k]| / k                 │
 │  - Recall@k = |relevant ∩ retrieved[:k]| / |relevant|           │
 │  - MRR@k = 1 / rank_of_first_relevant                           │
-│  - NDCG@k, HitRate@k, Average Precision@k                       │
+│  - NDCG@k, ERR@k, RBP@k, HitRate@k, Average Precision@k         │
 │                                                                  │
 │  Output: {"recall@4": 0.75, "precision@4": 0.5, ...}           │
 └─────────────────────────────────────────────────────────────────┘
@@ -525,16 +525,3 @@ hit_rate = 1.0  # At least one relevant doc found
 ```
 
 ---
-
-## Summary
-
-The boolean judge design provides:
-
-✅ **Clarity** - Binary decisions are unambiguous
-✅ **Correctness** - Aligns with IR metric semantics
-✅ **Simplicity** - Easy to implement and understand
-✅ **Performance** - Fast comparisons, efficient batching
-✅ **Extensibility** - Can add graded relevance later
-✅ **Separation** - Clean boundary between matching and measurement
-
-This architecture enables **production-ready RAG evaluation** with text-based matching while maintaining mathematical rigor and user-friendly interfaces.

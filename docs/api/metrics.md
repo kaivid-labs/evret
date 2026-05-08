@@ -12,4 +12,8 @@
 
 ::: evret.metrics.ndcg
 
+::: evret.metrics.err
+
+::: evret.metrics.rbp
+
 ::: evret.metrics.average_precision
