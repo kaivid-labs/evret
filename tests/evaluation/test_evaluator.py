@@ -137,23 +137,6 @@ def test_evaluator_rejects_duplicate_metric_names() -> None:
         Evaluator(retriever=retriever, metrics=[HitRate(k=1), HitRate(k=1)])
 
 
-def test_evaluator_supports_id_based_relevance_labels() -> None:
-    dataset = build_dataset()
-    dataset.queries = [
-        QueryExample(
-            query_id="q1",
-            query_text="When do employees need to submit travel expenses?",
-            relevant_doc_ids=["travel_policy_1"],
-        )
-    ]
-    retriever = CorpusRetriever(dataset.documents)
-    evaluator = Evaluator(retriever=retriever, metrics=[HitRate(k=1)])
-
-    results = evaluator.evaluate(dataset)
-
-    assert results.summary() == {"hit_rate@1": 1.0}
-
-
 def test_evaluator_scores_top_4_contexts_against_gold_chunks() -> None:
     dataset = build_dataset()
     dataset.queries = [

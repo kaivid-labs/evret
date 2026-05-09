@@ -8,7 +8,7 @@ class TestNDCGBasicScoring:
         metric = NDCG(k=3)
         score = metric.score_query(
             retrieved_doc_ids=["d2", "d1", "d3"],
-            relevant_doc_ids={"d1", "d2", "d3"},
+            expected_answers={"d1", "d2", "d3"},
         )
         assert score == 1.0
 
@@ -16,7 +16,7 @@ class TestNDCGBasicScoring:
         metric = NDCG(k=5)
         score = metric.score_query(
             retrieved_doc_ids=["d1", "d2", "d3"],
-            relevant_doc_ids=set(),
+            expected_answers=set(),
         )
         assert score == 0.0
 
@@ -24,7 +24,7 @@ class TestNDCGBasicScoring:
         metric = NDCG(k=3)
         score = metric.score_query(
             retrieved_doc_ids=["d1", "d2", "d3"],
-            relevant_doc_ids={"d1", "d3"},
+            expected_answers={"d1", "d3"},
         )
         assert score == pytest.approx(0.9197207891, rel=1e-9)
 
@@ -35,11 +35,11 @@ class TestNDCGRankingSensitivity:
 
         score_optimal = metric.score_query(
             retrieved_doc_ids=["d1", "d2", "d3"],
-            relevant_doc_ids={"d1", "d2"},
+            expected_answers={"d1", "d2"},
         )
         score_suboptimal = metric.score_query(
             retrieved_doc_ids=["d3", "d1", "d2"],
-            relevant_doc_ids={"d1", "d2"},
+            expected_answers={"d1", "d2"},
         )
 
         assert score_optimal > score_suboptimal
@@ -51,11 +51,11 @@ class TestNDCGRankingSensitivity:
 
         score_best = metric.score_query(
             retrieved_doc_ids=["rel1", "rel2", "rel3", "irr1", "irr2"],
-            relevant_doc_ids=relevant,
+            expected_answers=relevant,
         )
         score_worst = metric.score_query(
             retrieved_doc_ids=["irr1", "irr2", "rel1", "rel2", "rel3"],
-            relevant_doc_ids=relevant,
+            expected_answers=relevant,
         )
 
         assert score_best == 1.0
@@ -68,11 +68,11 @@ class TestNDCGDiscounting:
 
         score_early = metric.score_query(
             retrieved_doc_ids=["rel", "irr1", "irr2", "irr3", "irr4"],
-            relevant_doc_ids={"rel"},
+            expected_answers={"rel"},
         )
         score_late = metric.score_query(
             retrieved_doc_ids=["irr1", "irr2", "irr3", "irr4", "rel"],
-            relevant_doc_ids={"rel"},
+            expected_answers={"rel"},
         )
 
         assert score_early > score_late
@@ -84,7 +84,7 @@ class TestNDCGWithKCutoff:
         metric = NDCG(k=2)
         score = metric.score_query(
             retrieved_doc_ids=["d1", "d2", "d3", "d4"],
-            relevant_doc_ids={"d1", "d2"},
+            expected_answers={"d1", "d2"},
         )
         assert score == 1.0
 
@@ -92,7 +92,7 @@ class TestNDCGWithKCutoff:
         metric = NDCG(k=2)
         score = metric.score_query(
             retrieved_doc_ids=["irr1", "irr2", "rel1", "rel2"],
-            relevant_doc_ids={"rel1", "rel2"},
+            expected_answers={"rel1", "rel2"},
         )
         assert score == 0.0
 
@@ -100,7 +100,7 @@ class TestNDCGWithKCutoff:
         metric = NDCG(k=10)
         score = metric.score_query(
             retrieved_doc_ids=["d1", "d2"],
-            relevant_doc_ids={"d1", "d2"},
+            expected_answers={"d1", "d2"},
         )
         assert score == 1.0
 
@@ -110,7 +110,7 @@ class TestNDCGEdgeCases:
         metric = NDCG(k=5)
         score = metric.score_query(
             retrieved_doc_ids=[],
-            relevant_doc_ids={"doc1", "doc2"},
+            expected_answers={"doc1", "doc2"},
         )
         assert score == 0.0
 
@@ -118,7 +118,7 @@ class TestNDCGEdgeCases:
         metric = NDCG(k=3)
         score = metric.score_query(
             retrieved_doc_ids=["d1", "d2", "d3"],
-            relevant_doc_ids=set(),
+            expected_answers=set(),
         )
         assert score == 0.0
 
@@ -126,7 +126,7 @@ class TestNDCGEdgeCases:
         metric = NDCG(k=3)
         score = metric.score_query(
             retrieved_doc_ids=[],
-            relevant_doc_ids=set(),
+            expected_answers=set(),
         )
         assert score == 0.0
 
@@ -134,7 +134,7 @@ class TestNDCGEdgeCases:
         metric = NDCG(k=1)
         score = metric.score_query(
             retrieved_doc_ids=["doc1"],
-            relevant_doc_ids={"doc1"},
+            expected_answers={"doc1"},
         )
         assert score == 1.0
 
@@ -142,7 +142,7 @@ class TestNDCGEdgeCases:
         metric = NDCG(k=1)
         score = metric.score_query(
             retrieved_doc_ids=["doc1"],
-            relevant_doc_ids={"doc2"},
+            expected_answers={"doc2"},
         )
         assert score == 0.0
 
@@ -155,7 +155,7 @@ class TestNDCGBatchScoring:
                 ["d1", "d2", "d3"],
                 ["d9", "d8", "d7"],
             ],
-            relevant_by_query=[
+            expected_by_query=[
                 {"d1", "d3"},
                 {"d4"},
             ],
@@ -169,7 +169,7 @@ class TestNDCGBatchScoring:
                 ["d1", "d2", "d3"],
                 ["d4", "d5", "d6"],
             ],
-            relevant_by_query=[
+            expected_by_query=[
                 {"d1", "d2", "d3"},
                 {"d7", "d8"},
             ],
@@ -179,7 +179,7 @@ class TestNDCGBatchScoring:
 
     def test_empty_batch_returns_zero(self) -> None:
         metric = NDCG(k=5)
-        score = metric.score(retrieved_by_query=[], relevant_by_query=[])
+        score = metric.score(retrieved_by_query=[], expected_by_query=[])
         assert score == 0.0
 
 
@@ -192,7 +192,7 @@ class TestNDCGKParameter:
 
         score = metric.score_query(
             retrieved_doc_ids=retrieved,
-            relevant_doc_ids=relevant,
+            expected_answers=relevant,
         )
         assert score == 1.0
 
@@ -200,7 +200,7 @@ class TestNDCGKParameter:
         metric = NDCG(k=1)
         score = metric.score_query(
             retrieved_doc_ids=["doc1", "doc2"],
-            relevant_doc_ids={"doc1"},
+            expected_answers={"doc1"},
         )
         assert score == 1.0
 
@@ -215,7 +215,7 @@ class TestNDCGNormalization:
 
             score = metric.score_query(
                 retrieved_doc_ids=retrieved,
-                relevant_doc_ids=relevant,
+                expected_answers=relevant,
             )
             assert 0.0 <= score <= 1.0
 
@@ -224,11 +224,11 @@ class TestNDCGNormalization:
 
         score_perfect = metric.score_query(
             retrieved_doc_ids=["d1", "d2", "d3", "d4", "d5"],
-            relevant_doc_ids={"d1", "d2", "d3", "d4", "d5"},
+            expected_answers={"d1", "d2", "d3", "d4", "d5"},
         )
         score_partial = metric.score_query(
             retrieved_doc_ids=["d1", "irr1", "d2", "irr2", "d3"],
-            relevant_doc_ids={"d1", "d2", "d3"},
+            expected_answers={"d1", "d2", "d3"},
         )
 
         assert score_perfect == 1.0
@@ -242,11 +242,11 @@ class TestNDCGVsOtherMetrics:
 
         score_good_order = metric.score_query(
             retrieved_doc_ids=["rel1", "rel2", "irr"],
-            relevant_doc_ids={"rel1", "rel2"},
+            expected_answers={"rel1", "rel2"},
         )
         score_bad_order = metric.score_query(
             retrieved_doc_ids=["irr", "rel1", "rel2"],
-            relevant_doc_ids={"rel1", "rel2"},
+            expected_answers={"rel1", "rel2"},
         )
 
         assert score_good_order > score_bad_order

@@ -73,7 +73,7 @@ class Evaluator:
             raise EvretValidationError(
                 "retriever returned a different number of query results than input queries"
             )
-        retrieved_ids, relevant_sets = self._build_metric_inputs(
+        retrieved_ids, expected_sets = self._build_metric_inputs(
             dataset=dataset,
             retrieved_results=retrieved_results,
         )
@@ -82,7 +82,7 @@ class Evaluator:
         for metric in self.metrics:
             metric_scores[metric.name] = metric.score(
                 retrieved_by_query=retrieved_ids,
-                relevant_by_query=relevant_sets,
+                expected_by_query=expected_sets,
             )
 
         return EvaluationResults(
@@ -103,18 +103,17 @@ class Evaluator:
         }
 
         retrieved_by_query: list[list[str]] = []
-        relevant_by_query: list[set[str]] = []
+        expected_by_query: list[set[str]] = []
 
         for query, query_results in zip(dataset.queries, retrieved_results):
             normalized_query_text = self._normalize_label(query.query_text)
-            labels_to_match = query.relevant_doc_ids if query.relevant_doc_ids else query.expected_answers
-            relevant_labels = [
+            expected_labels = [
                 self._normalize_label(label)
-                for label in labels_to_match
+                for label in query.expected_answers
                 if str(label).strip()
             ]
-            unique_relevant_labels = list(dict.fromkeys(relevant_labels))
-            relevant_set = set(unique_relevant_labels)
+            unique_expected_labels = list(dict.fromkeys(expected_labels))
+            expected_set = set(unique_expected_labels)
 
             contexts_per_result = []
             candidates_per_result = []
@@ -124,7 +123,7 @@ class Evaluator:
                 candidates_per_result.append(candidates)
 
                 result_contexts = []
-                for label in unique_relevant_labels:
+                for label in unique_expected_labels:
                     for candidate in candidates:
                         result_contexts.append(
                             JudgmentContext(
@@ -142,19 +141,19 @@ class Evaluator:
                 all_judgments = []
 
             judgment_idx = 0
-            available_labels = set(unique_relevant_labels)
+            available_labels = set(unique_expected_labels)
             normalized_retrieved: list[str] = []
 
             for rank, candidates in enumerate(candidates_per_result):
-                num_contexts = len(unique_relevant_labels) * len(candidates)
+                num_contexts = len(unique_expected_labels) * len(candidates)
                 result_judgments = all_judgments[judgment_idx:judgment_idx + num_contexts]
                 judgment_idx += num_contexts
 
                 matched_label = self._find_match(
                     judgments=result_judgments,
-                    ordered_relevant_labels=unique_relevant_labels,
+                    ordered_expected_labels=unique_expected_labels,
                     candidates=candidates,
-                    remaining_relevant_labels=available_labels,
+                    remaining_expected_labels=available_labels,
                 )
 
                 if matched_label is not None:
@@ -165,9 +164,9 @@ class Evaluator:
                     normalized_retrieved.append(f"retrieved_{rank}:{fallback_label}")
 
             retrieved_by_query.append(normalized_retrieved)
-            relevant_by_query.append(relevant_set)
+            expected_by_query.append(expected_set)
 
-        return retrieved_by_query, relevant_by_query
+        return retrieved_by_query, expected_by_query
 
     def _candidate_labels(
         self,
@@ -201,14 +200,14 @@ class Evaluator:
     def _find_match(
         self,
         judgments: list[bool],
-        ordered_relevant_labels: Sequence[str],
+        ordered_expected_labels: Sequence[str],
         candidates: list[str],
-        remaining_relevant_labels: set[str],
+        remaining_expected_labels: set[str],
     ) -> str | None:
         """Find first matching label from batch judgments."""
         idx = 0
-        for label in ordered_relevant_labels:
-            if label not in remaining_relevant_labels:
+        for label in ordered_expected_labels:
+            if label not in remaining_expected_labels:
                 idx += len(candidates)
                 continue
 

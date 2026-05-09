@@ -21,9 +21,9 @@ class MRR(Metric):
     def score_query(
         self,
         retrieved_doc_ids: Sequence[str],
-        relevant_doc_ids: Collection[str],
+        expected_answers: Collection[str],
     ) -> float:
-        relevant_set = to_id_set(relevant_doc_ids)
+        relevant_set = to_id_set(expected_answers)
 
         if not relevant_set:
             return 0.0
@@ -33,7 +33,7 @@ class MRR(Metric):
 
         first_relevant_rank = find_first_relevant_rank(
             retrieved_doc_ids=retrieved_doc_ids,
-            relevant_doc_ids=relevant_set,
+            expected_answers=relevant_set,
             max_rank=self.k,
         )
 

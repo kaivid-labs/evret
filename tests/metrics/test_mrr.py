@@ -8,7 +8,7 @@ class TestMRRBasicScoring:
         metric = MRR(k=5)
         score = metric.score_query(
             retrieved_doc_ids=["doc_2", "doc_1", "doc_3"],
-            relevant_doc_ids={"doc_2", "doc_7"},
+            expected_answers={"doc_2", "doc_7"},
         )
         assert score == 1.0
 
@@ -16,7 +16,7 @@ class TestMRRBasicScoring:
         metric = MRR(k=5)
         score = metric.score_query(
             retrieved_doc_ids=["doc1", "doc2", "doc3"],
-            relevant_doc_ids={"doc2"},
+            expected_answers={"doc2"},
         )
         assert score == 0.5
 
@@ -24,7 +24,7 @@ class TestMRRBasicScoring:
         metric = MRR(k=5)
         score = metric.score_query(
             retrieved_doc_ids=["doc_x", "doc_y", "doc_z", "doc_1"],
-            relevant_doc_ids={"doc_z", "doc_2"},
+            expected_answers={"doc_z", "doc_2"},
         )
         assert score == 1 / 3
 
@@ -46,7 +46,7 @@ class TestMRRRankPosition:
         retrieved = [f"irr{i}" for i in range(rank - 1)] + ["rel"]
         score = metric.score_query(
             retrieved_doc_ids=retrieved,
-            relevant_doc_ids={"rel"},
+            expected_answers={"rel"},
         )
         assert score == pytest.approx(expected_score)
 
@@ -56,7 +56,7 @@ class TestMRRFirstRelevantOnly:
         metric = MRR(k=5)
         score = metric.score_query(
             retrieved_doc_ids=["irr", "rel1", "rel2", "rel3"],
-            relevant_doc_ids={"rel1", "rel2", "rel3"},
+            expected_answers={"rel1", "rel2", "rel3"},
         )
         assert score == 0.5
 
@@ -65,11 +65,11 @@ class TestMRRFirstRelevantOnly:
 
         score_multiple = metric.score_query(
             retrieved_doc_ids=["doc1", "doc2", "doc3"],
-            relevant_doc_ids={"doc2", "doc3"},
+            expected_answers={"doc2", "doc3"},
         )
         score_single = metric.score_query(
             retrieved_doc_ids=["doc1", "doc2", "doc3"],
-            relevant_doc_ids={"doc2"},
+            expected_answers={"doc2"},
         )
 
         assert score_multiple == score_single == 0.5
@@ -80,7 +80,7 @@ class TestMRRWithKCutoff:
         metric = MRR(k=3)
         score = metric.score_query(
             retrieved_doc_ids=["doc1", "doc2", "doc3", "doc4"],
-            relevant_doc_ids={"doc3"},
+            expected_answers={"doc3"},
         )
         assert score == pytest.approx(1 / 3)
 
@@ -88,7 +88,7 @@ class TestMRRWithKCutoff:
         metric = MRR(k=3)
         score = metric.score_query(
             retrieved_doc_ids=["doc1", "doc2", "doc3", "doc4"],
-            relevant_doc_ids={"doc4"},
+            expected_answers={"doc4"},
         )
         assert score == 0.0
 
@@ -96,7 +96,7 @@ class TestMRRWithKCutoff:
         metric = MRR(k=10)
         score = metric.score_query(
             retrieved_doc_ids=["doc1", "doc2"],
-            relevant_doc_ids={"doc2"},
+            expected_answers={"doc2"},
         )
         assert score == 0.5
 
@@ -106,7 +106,7 @@ class TestMRREdgeCases:
         metric = MRR(k=5)
         score = metric.score_query(
             retrieved_doc_ids=[],
-            relevant_doc_ids={"doc1", "doc2"},
+            expected_answers={"doc1", "doc2"},
         )
         assert score == 0.0
 
@@ -114,7 +114,7 @@ class TestMRREdgeCases:
         metric = MRR(k=2)
         score = metric.score_query(
             retrieved_doc_ids=["doc_1", "doc_2"],
-            relevant_doc_ids=set(),
+            expected_answers=set(),
         )
         assert score == 0.0
 
@@ -122,7 +122,7 @@ class TestMRREdgeCases:
         metric = MRR(k=3)
         score = metric.score_query(
             retrieved_doc_ids=[],
-            relevant_doc_ids=set(),
+            expected_answers=set(),
         )
         assert score == 0.0
 
@@ -130,7 +130,7 @@ class TestMRREdgeCases:
         metric = MRR(k=2)
         score = metric.score_query(
             retrieved_doc_ids=["doc_1", "doc_2", "doc_3"],
-            relevant_doc_ids={"doc_3"},
+            expected_answers={"doc_3"},
         )
         assert score == 0.0
 
@@ -138,7 +138,7 @@ class TestMRREdgeCases:
         metric = MRR(k=1)
         score = metric.score_query(
             retrieved_doc_ids=["doc1"],
-            relevant_doc_ids={"doc1"},
+            expected_answers={"doc1"},
         )
         assert score == 1.0
 
@@ -146,7 +146,7 @@ class TestMRREdgeCases:
         metric = MRR(k=1)
         score = metric.score_query(
             retrieved_doc_ids=["doc1"],
-            relevant_doc_ids={"doc2"},
+            expected_answers={"doc2"},
         )
         assert score == 0.0
 
@@ -159,7 +159,7 @@ class TestMRRBatchScoring:
                 ["doc_2", "doc_5", "doc_8"],
                 ["doc_9", "doc_3", "doc_4"],
             ],
-            relevant_by_query=[{"doc_5"}, {"doc_x"}],
+            expected_by_query=[{"doc_5"}, {"doc_x"}],
         )
         assert score == 0.25
 
@@ -171,14 +171,14 @@ class TestMRRBatchScoring:
                 ["irr1", "rel", "irr2"],
                 ["irr1", "irr2", "rel"],
             ],
-            relevant_by_query=[{"rel"}, {"rel"}, {"rel"}],
+            expected_by_query=[{"rel"}, {"rel"}, {"rel"}],
         )
         expected = (1.0 + 0.5 + (1 / 3)) / 3
         assert score == pytest.approx(expected)
 
     def test_empty_batch_returns_zero(self) -> None:
         metric = MRR(k=5)
-        score = metric.score(retrieved_by_query=[], relevant_by_query=[])
+        score = metric.score(retrieved_by_query=[], expected_by_query=[])
         assert score == 0.0
 
 
@@ -191,7 +191,7 @@ class TestMRRKParameter:
 
         score = metric.score_query(
             retrieved_doc_ids=retrieved,
-            relevant_doc_ids=relevant,
+            expected_answers=relevant,
         )
         assert 0.0 <= score <= 1.0
 
@@ -199,7 +199,7 @@ class TestMRRKParameter:
         metric = MRR(k=1)
         score = metric.score_query(
             retrieved_doc_ids=["doc1", "doc2", "doc3"],
-            relevant_doc_ids={"doc1"},
+            expected_answers={"doc1"},
         )
         assert score == 1.0
 
@@ -210,15 +210,15 @@ class TestMRRRankingSensitivity:
 
         score_rank1 = metric.score_query(
             retrieved_doc_ids=["rel", "irr1", "irr2"],
-            relevant_doc_ids={"rel"},
+            expected_answers={"rel"},
         )
         score_rank2 = metric.score_query(
             retrieved_doc_ids=["irr1", "rel", "irr2"],
-            relevant_doc_ids={"rel"},
+            expected_answers={"rel"},
         )
         score_rank3 = metric.score_query(
             retrieved_doc_ids=["irr1", "irr2", "rel"],
-            relevant_doc_ids={"rel"},
+            expected_answers={"rel"},
         )
 
         assert score_rank1 > score_rank2 > score_rank3
@@ -233,11 +233,11 @@ class TestMRRSemantics:
 
         score_early = metric.score_query(
             retrieved_doc_ids=["rel"] + [f"irr{i}" for i in range(9)],
-            relevant_doc_ids={"rel"},
+            expected_answers={"rel"},
         )
         score_late = metric.score_query(
             retrieved_doc_ids=[f"irr{i}" for i in range(9)] + ["rel"],
-            relevant_doc_ids={"rel"},
+            expected_answers={"rel"},
         )
 
         assert score_early == 1.0

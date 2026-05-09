@@ -9,11 +9,11 @@ class TestRBPBasicScoring:
     """Test basic RBP scoring behavior."""
 
     def test_perfect_rbp_all_relevant(self) -> None:
-        """Perfect ranking with all relevant docs."""
+        """Perfect ranking with all expected answers."""
         metric = RBP(k=3, p=0.8)
         score = metric.score_query(
             retrieved_doc_ids=["d1", "d2", "d3"],
-            relevant_doc_ids={"d1", "d2", "d3"},
+            expected_answers={"d1", "d2", "d3"},
         )
         # RBP = (1-0.8) × [0.8^0×1 + 0.8^1×1 + 0.8^2×1]
         #     = 0.2 × [1 + 0.8 + 0.64]
@@ -22,11 +22,11 @@ class TestRBPBasicScoring:
         assert score == pytest.approx(expected, rel=1e-6)
 
     def test_zero_rbp_no_relevant(self) -> None:
-        """RBP should be 0 when no relevant documents."""
+        """RBP should be 0 when no expected answeruments."""
         metric = RBP(k=5, p=0.8)
         score = metric.score_query(
             retrieved_doc_ids=["d1", "d2", "d3"],
-            relevant_doc_ids=set(),
+            expected_answers=set(),
         )
         assert score == 0.0
 
@@ -35,16 +35,16 @@ class TestRBPBasicScoring:
         metric = RBP(k=5, p=0.8)
         score = metric.score_query(
             retrieved_doc_ids=[],
-            relevant_doc_ids={"d1", "d2"},
+            expected_answers={"d1", "d2"},
         )
         assert score == 0.0
 
     def test_single_relevant_at_top(self) -> None:
-        """Single relevant doc at position 1."""
+        """Single expected answer at position 1."""
         metric = RBP(k=3, p=0.8)
         score = metric.score_query(
             retrieved_doc_ids=["d1", "d2", "d3"],
-            relevant_doc_ids={"d1"},
+            expected_answers={"d1"},
         )
         # RBP = (1-0.8) × [0.8^0×1 + 0.8^1×0 + 0.8^2×0]
         #     = 0.2 × 1 = 0.2
@@ -56,7 +56,7 @@ class TestRBPPersistenceParameter:
 
     def test_higher_p_values_later_positions_more(self) -> None:
         """Higher p gives more weight to later positions relative to total."""
-        # Relevant doc at position 3
+        # Expected answer at position 3
         retrieved = ["d1", "d2", "d3"]
         relevant = {"d3"}
 
@@ -109,15 +109,15 @@ class TestRBPGeometricWeighting:
 
         score_pos1 = metric.score_query(
             retrieved_doc_ids=["d1", "d2", "d3"],
-            relevant_doc_ids={"d1"},
+            expected_answers={"d1"},
         )
         score_pos2 = metric.score_query(
             retrieved_doc_ids=["d1", "d2", "d3"],
-            relevant_doc_ids={"d2"},
+            expected_answers={"d2"},
         )
         score_pos3 = metric.score_query(
             retrieved_doc_ids=["d1", "d2", "d3"],
-            relevant_doc_ids={"d3"},
+            expected_answers={"d3"},
         )
 
         assert score_pos1 > score_pos2 > score_pos3
@@ -149,7 +149,7 @@ class TestRBPWithKCutoff:
         metric = RBP(k=2, p=0.8)
         score = metric.score_query(
             retrieved_doc_ids=["d1", "d2", "d3", "d4"],
-            relevant_doc_ids={"d1", "d2"},
+            expected_answers={"d1", "d2"},
         )
         # Only positions 1 and 2
         # RBP = 0.2 × (1 + 0.8) = 0.36
@@ -157,11 +157,11 @@ class TestRBPWithKCutoff:
         assert score == pytest.approx(expected, rel=1e-6)
 
     def test_relevant_beyond_k_ignored(self) -> None:
-        """Relevant docs beyond k should be ignored."""
+        """Expected answers beyond k should be ignored."""
         metric = RBP(k=2, p=0.8)
         score = metric.score_query(
             retrieved_doc_ids=["d1", "d2", "d3", "d4"],
-            relevant_doc_ids={"d3", "d4"},
+            expected_answers={"d3", "d4"},
         )
         assert score == 0.0
 
@@ -170,7 +170,7 @@ class TestRBPWithKCutoff:
         metric = RBP(k=10, p=0.8)
         score = metric.score_query(
             retrieved_doc_ids=["d1", "d2"],
-            relevant_doc_ids={"d1", "d2"},
+            expected_answers={"d1", "d2"},
         )
         expected = 0.2 * (1.0 + 0.8)
         assert score == pytest.approx(expected, rel=1e-6)
@@ -184,7 +184,7 @@ class TestRBPEdgeCases:
         metric = RBP(k=5, p=0.8)
         score = metric.score_query(
             retrieved_doc_ids=[],
-            relevant_doc_ids=set(),
+            expected_answers=set(),
         )
         assert score == 0.0
 
@@ -193,7 +193,7 @@ class TestRBPEdgeCases:
         metric = RBP(k=1, p=0.8)
         score = metric.score_query(
             retrieved_doc_ids=["d1"],
-            relevant_doc_ids={"d1"},
+            expected_answers={"d1"},
         )
         # RBP = (1-0.8) × 1 = 0.2
         assert score == pytest.approx(0.2, rel=1e-6)
@@ -203,16 +203,16 @@ class TestRBPEdgeCases:
         metric = RBP(k=1, p=0.8)
         score = metric.score_query(
             retrieved_doc_ids=["d1"],
-            relevant_doc_ids={"d2"},
+            expected_answers={"d2"},
         )
         assert score == 0.0
 
     def test_alternating_relevant_irrelevant(self) -> None:
-        """Test with alternating relevant/irrelevant docs."""
+        """Test with alternating relevant/irexpected answers."""
         metric = RBP(k=5, p=0.8)
         score = metric.score_query(
             retrieved_doc_ids=["rel1", "irr1", "rel2", "irr2", "rel3"],
-            relevant_doc_ids={"rel1", "rel2", "rel3"},
+            expected_answers={"rel1", "rel2", "rel3"},
         )
         # RBP = 0.2 × (1 + 0 + 0.64 + 0 + 0.4096)
         expected = 0.2 * (1.0 + 0.64 + 0.4096)
@@ -230,7 +230,7 @@ class TestRBPBatchScoring:
                 ["d1", "d2", "d3"],
                 ["d4", "d5", "d6"],
             ],
-            relevant_by_query=[
+            expected_by_query=[
                 {"d1", "d2"},
                 {"d6"},
             ],
@@ -243,7 +243,7 @@ class TestRBPBatchScoring:
     def test_empty_batch_returns_zero(self) -> None:
         """Empty batch should return 0."""
         metric = RBP(k=5, p=0.8)
-        score = metric.score(retrieved_by_query=[], relevant_by_query=[])
+        score = metric.score(retrieved_by_query=[], expected_by_query=[])
         assert score == 0.0
 
 
@@ -255,7 +255,7 @@ class TestRBPGradedRelevance:
         metric = RBP(k=3, p=0.8)
         score = metric.score_query(
             retrieved_doc_ids=["d1", "d2", "d3"],
-            relevant_doc_ids={"d1": 4, "d2": 2, "d3": 1},  # Grades 1-4
+            expected_answers={"d1": 4, "d2": 2, "d3": 1},  # Grades 1-4
         )
         # Normalized: d1=1.0, d2=0.5, d3=0.25
         # RBP = 0.2 × (1.0 + 0.8×0.5 + 0.64×0.25)
@@ -269,11 +269,11 @@ class TestRBPGradedRelevance:
 
         score_grade_1 = metric.score_query(
             retrieved_doc_ids=["d1"],
-            relevant_doc_ids={"d1": 1},
+            expected_answers={"d1": 1},
         )
         score_grade_4 = metric.score_query(
             retrieved_doc_ids=["d1"],
-            relevant_doc_ids={"d1": 4},
+            expected_answers={"d1": 4},
         )
 
         # Both get normalized: if max is 4, then grade_1 → 0.25, grade_4 → 1.0
@@ -284,7 +284,7 @@ class TestRBPGradedRelevance:
         # Let's test with multiple docs to see the difference
         score_both = metric.score_query(
             retrieved_doc_ids=["d1", "d2"],
-            relevant_doc_ids={"d1": 1, "d2": 4},
+            expected_answers={"d1": 1, "d2": 4},
         )
         # Now d1 normalized to 1/4=0.25, d2 normalized to 4/4=1.0
         # RBP = 0.2 × (0.25 + 0.8×1.0) = 0.2 × 1.05 = 0.21
@@ -296,7 +296,7 @@ class TestRBPGradedRelevance:
         metric = RBP(k=2, p=0.8)
         score = metric.score_query(
             retrieved_doc_ids=["d1", "d2"],
-            relevant_doc_ids={"d1": 1.0, "d2": 0.5},
+            expected_answers={"d1": 1.0, "d2": 0.5},
         )
         # RBP = 0.2 × (1.0 + 0.8×0.5) = 0.2 × 1.4 = 0.28
         expected = 0.2 * (1.0 + 0.4)
@@ -382,14 +382,14 @@ class TestRBPVsOtherMetrics:
 
         score_good_order = metric.score_query(
             retrieved_doc_ids=["rel1", "rel2", "irr"],
-            relevant_doc_ids={"rel1", "rel2"},
+            expected_answers={"rel1", "rel2"},
         )
         score_bad_order = metric.score_query(
             retrieved_doc_ids=["irr", "rel1", "rel2"],
-            relevant_doc_ids={"rel1", "rel2"},
+            expected_answers={"rel1", "rel2"},
         )
 
-        # Relevant docs at top should yield higher RBP
+        # Expected answers at top should yield higher RBP
         assert score_good_order > score_bad_order
 
     def test_rbp_top_heavy_weighting(self) -> None:
@@ -399,12 +399,12 @@ class TestRBPVsOtherMetrics:
         # All relevant at top
         score_top = metric.score_query(
             retrieved_doc_ids=[f"d{i}" for i in range(10)],
-            relevant_doc_ids={f"d{i}" for i in range(3)},
+            expected_answers={f"d{i}" for i in range(3)},
         )
         # All relevant at bottom
         score_bottom = metric.score_query(
             retrieved_doc_ids=[f"d{i}" for i in range(10)],
-            relevant_doc_ids={f"d{i}" for i in range(7, 10)},
+            expected_answers={f"d{i}" for i in range(7, 10)},
         )
 
         assert score_top > score_bottom
@@ -422,7 +422,7 @@ class TestRBPParameterizedScenarios:
 
         score = metric.score_query(
             retrieved_doc_ids=retrieved,
-            relevant_doc_ids=relevant,
+            expected_answers=relevant,
         )
         # Should be bounded in [0, 1]
         assert 0.0 <= score <= 1.0
@@ -449,6 +449,6 @@ class TestRBPParameterizedScenarios:
         metric = RBP(k=len(retrieved), p=p)
         score = metric.score_query(
             retrieved_doc_ids=retrieved,
-            relevant_doc_ids=relevant,
+            expected_answers=relevant,
         )
         assert score == pytest.approx(expected, rel=1e-6)

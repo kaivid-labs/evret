@@ -10,7 +10,7 @@ from evret.metrics.base import Metric
 
 
 class Recall(Metric):
-    """Coverage metric over relevant documents.
+    """Coverage metric over expected answeruments.
 
     Formula:
     ``Recall@k = |relevant ∩ retrieved[:k]| / |relevant|``
@@ -21,9 +21,9 @@ class Recall(Metric):
     def score_query(
         self,
         retrieved_doc_ids: Sequence[str],
-        relevant_doc_ids: Collection[str],
+        expected_answers: Collection[str],
     ) -> float:
-        relevant_set = to_id_set(relevant_doc_ids)
+        relevant_set = to_id_set(expected_answers)
         total_relevant = len(relevant_set)
 
         if total_relevant == 0:

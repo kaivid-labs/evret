@@ -18,9 +18,9 @@ class AveragePrecision(Metric):
     def score_query(
         self,
         retrieved_doc_ids: Sequence[str],
-        relevant_doc_ids: Collection[str],
+        expected_answers: Collection[str],
     ) -> float:
-        relevant_set = to_id_set(relevant_doc_ids)
+        relevant_set = to_id_set(expected_answers)
         total_relevant = len(relevant_set)
 
         if total_relevant == 0:
@@ -31,7 +31,7 @@ class AveragePrecision(Metric):
 
         relevant_ranks = compute_relevant_ranks(
             retrieved_doc_ids=retrieved_doc_ids,
-            relevant_doc_ids=relevant_set,
+            expected_answers=relevant_set,
             max_rank=self.k,
         )
 

@@ -30,25 +30,25 @@ def validate_retrieved_sequence(
 
 
 def validate_relevant_collection(
-    relevant_doc_ids: Collection[str],
+    expected_answers: Collection[str],
     allow_empty: bool = False,
 ) -> None:
-    if not isinstance(relevant_doc_ids, Collection):
+    if not isinstance(expected_answers, Collection):
         raise EvretValidationError(
-            f"relevant_doc_ids must be a Collection, got {type(relevant_doc_ids).__name__}"
+            f"expected_answers must be a Collection, got {type(expected_answers).__name__}"
         )
 
-    if not allow_empty and not relevant_doc_ids:
-        raise EvretValidationError("relevant_doc_ids cannot be empty")
+    if not allow_empty and not expected_answers:
+        raise EvretValidationError("expected_answers cannot be empty")
 
 
 def validate_batch_lengths(
     retrieved_by_query: Sequence[Sequence[str]],
-    relevant_by_query: Sequence[Collection[str]],
+    expected_by_query: Sequence[Collection[str]],
 ) -> None:
-    if len(retrieved_by_query) != len(relevant_by_query):
+    if len(retrieved_by_query) != len(expected_by_query):
         raise EvretValidationError(
-            "retrieved_by_query and relevant_by_query must have same length"
+            "retrieved_by_query and expected_by_query must have same length"
         )
 
 

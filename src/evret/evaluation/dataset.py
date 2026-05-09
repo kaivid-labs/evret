@@ -20,17 +20,12 @@ from evret.utils import (
 class QueryExample:
     """One query item in an evaluation dataset.
 
-    Supports two evaluation patterns:
-    1. Classic IR: Provide relevant_doc_ids (pre-labeled document identifiers)
-    2. Judge-based: Provide expected_answers (answer text snippets for judge to match)
-
-    Use relevant_doc_ids when you have pre-labeled ground truth document IDs.
-    Use expected_answers when you want a judge to determine relevance by comparing against expected answer text.
+    Provide expected_answers as gold answer text snippets for the judge to match
+    against retrieved content.
     """
 
     query_id: str
     query_text: str
-    relevant_doc_ids: list[str] = field(default_factory=list)
     expected_answers: list[str] = field(default_factory=list)
 
 
@@ -88,17 +83,12 @@ class EvaluationDataset:
                 )
                 query_id = require_non_empty_str(query_id, "query_id")
 
-                relevant_doc_ids = cls._parse_relevant_docs(row.get("relevant_doc_ids", ""))
-                expected_answers = cls._parse_relevant_docs(row.get("expected_answers", ""))
-
-                if not relevant_doc_ids and not expected_answers:
-                    relevant_doc_ids = cls._parse_relevant_docs(row.get("relevant_docs", ""))
+                expected_answers = cls._parse_answer_list(row.get("expected_answers", ""))
 
                 query_items.append(
                     QueryExample(
                         query_id=query_id,
                         query_text=query_text,
-                        relevant_doc_ids=relevant_doc_ids,
                         expected_answers=expected_answers,
                     )
                 )
@@ -116,26 +106,14 @@ class EvaluationDataset:
         query_id = require_non_empty_str(query_id_raw or "", "query_id")
         query_text = require_non_empty_str(query_text_raw or "", "query_text")
 
-        relevant_doc_ids_raw = item.get("relevant_doc_ids") or []
-        if not isinstance(relevant_doc_ids_raw, list):
-            raise EvretValidationError("relevant_doc_ids must be a list")
-        relevant_doc_ids = normalize_unique_non_empty_strings(relevant_doc_ids_raw)
-
         expected_answers_raw = item.get("expected_answers") or []
         if not isinstance(expected_answers_raw, list):
             raise EvretValidationError("expected_answers must be a list")
         expected_answers = normalize_unique_non_empty_strings(expected_answers_raw)
 
-        if not relevant_doc_ids and not expected_answers:
-            relevant_docs_raw = item.get("relevant_docs") or []
-            if not isinstance(relevant_docs_raw, list):
-                raise EvretValidationError("relevant_docs must be a list")
-            relevant_doc_ids = normalize_unique_non_empty_strings(relevant_docs_raw)
-
         return QueryExample(
             query_id=query_id,
             query_text=query_text,
-            relevant_doc_ids=relevant_doc_ids,
             expected_answers=expected_answers,
         )
 
@@ -153,7 +131,7 @@ class EvaluationDataset:
         return DocumentExample(doc_id=doc_id, text=text, metadata=dict(metadata))
 
     @staticmethod
-    def _parse_relevant_docs(raw_value: str) -> list[str]:
+    def _parse_answer_list(raw_value: str) -> list[str]:
         value = raw_value.strip()
         if not value:
             return []
@@ -165,4 +143,4 @@ class EvaluationDataset:
 
         if isinstance(loaded, list):
             return normalize_unique_non_empty_strings(loaded)
-        raise EvretValidationError("relevant_docs must be a JSON list or comma-separated string")
+        raise EvretValidationError("expected_answers must be a JSON list or comma-separated string")

@@ -8,7 +8,7 @@ class TestHitRateBasicScoring:
         metric = HitRate(k=3)
         score = metric.score_query(
             retrieved_doc_ids=["doc1", "doc2", "doc3"],
-            relevant_doc_ids={"doc2"},
+            expected_answers={"doc2"},
         )
         assert score == 1.0
 
@@ -16,7 +16,7 @@ class TestHitRateBasicScoring:
         metric = HitRate(k=3)
         score = metric.score_query(
             retrieved_doc_ids=["doc1", "doc2", "doc3"],
-            relevant_doc_ids={"doc4", "doc5"},
+            expected_answers={"doc4", "doc5"},
         )
         assert score == 0.0
 
@@ -24,7 +24,7 @@ class TestHitRateBasicScoring:
         metric = HitRate(k=3)
         score = metric.score_query(
             retrieved_doc_ids=["doc1", "doc2", "doc3"],
-            relevant_doc_ids={"doc1", "doc2", "doc3"},
+            expected_answers={"doc1", "doc2", "doc3"},
         )
         assert score == 1.0
 
@@ -35,11 +35,11 @@ class TestHitRateBinaryBehavior:
 
         score_hit = metric.score_query(
             retrieved_doc_ids=["doc1", "doc2", "doc3"],
-            relevant_doc_ids={"doc3"},
+            expected_answers={"doc3"},
         )
         score_miss = metric.score_query(
             retrieved_doc_ids=["doc1", "doc2", "doc3"],
-            relevant_doc_ids={"doc4"},
+            expected_answers={"doc4"},
         )
 
         assert score_hit in {0.0, 1.0}
@@ -52,11 +52,11 @@ class TestHitRateBinaryBehavior:
 
         score_one_hit = metric.score_query(
             retrieved_doc_ids=["doc1", "doc2", "doc3"],
-            relevant_doc_ids={"doc1"},
+            expected_answers={"doc1"},
         )
         score_three_hits = metric.score_query(
             retrieved_doc_ids=["doc1", "doc2", "doc3"],
-            relevant_doc_ids={"doc1", "doc2", "doc3"},
+            expected_answers={"doc1", "doc2", "doc3"},
         )
 
         assert score_one_hit == score_three_hits == 1.0
@@ -67,7 +67,7 @@ class TestHitRateWithKCutoff:
         metric = HitRate(k=3)
         score = metric.score_query(
             retrieved_doc_ids=["doc_9", "doc_2", "doc_5", "doc_7"],
-            relevant_doc_ids={"doc_5", "doc_88"},
+            expected_answers={"doc_5", "doc_88"},
         )
         assert score == 1.0
 
@@ -75,7 +75,7 @@ class TestHitRateWithKCutoff:
         metric = HitRate(k=2)
         score = metric.score_query(
             retrieved_doc_ids=["doc_9", "doc_2", "doc_5"],
-            relevant_doc_ids={"doc_5"},
+            expected_answers={"doc_5"},
         )
         assert score == 0.0
 
@@ -83,7 +83,7 @@ class TestHitRateWithKCutoff:
         metric = HitRate(k=3)
         score = metric.score_query(
             retrieved_doc_ids=["doc1", "doc2", "doc3"],
-            relevant_doc_ids={"doc3"},
+            expected_answers={"doc3"},
         )
         assert score == 1.0
 
@@ -91,7 +91,7 @@ class TestHitRateWithKCutoff:
         metric = HitRate(k=3)
         score = metric.score_query(
             retrieved_doc_ids=["doc1", "doc2", "doc3", "doc4"],
-            relevant_doc_ids={"doc4"},
+            expected_answers={"doc4"},
         )
         assert score == 0.0
 
@@ -101,7 +101,7 @@ class TestHitRateEdgeCases:
         metric = HitRate(k=5)
         score = metric.score_query(
             retrieved_doc_ids=[],
-            relevant_doc_ids={"doc1", "doc2"},
+            expected_answers={"doc1", "doc2"},
         )
         assert score == 0.0
 
@@ -109,7 +109,7 @@ class TestHitRateEdgeCases:
         metric = HitRate(k=5)
         score = metric.score_query(
             retrieved_doc_ids=["doc1", "doc2", "doc3"],
-            relevant_doc_ids=set(),
+            expected_answers=set(),
         )
         assert score == 0.0
 
@@ -117,7 +117,7 @@ class TestHitRateEdgeCases:
         metric = HitRate(k=3)
         score = metric.score_query(
             retrieved_doc_ids=[],
-            relevant_doc_ids=set(),
+            expected_answers=set(),
         )
         assert score == 0.0
 
@@ -125,7 +125,7 @@ class TestHitRateEdgeCases:
         metric = HitRate(k=1)
         score = metric.score_query(
             retrieved_doc_ids=["doc1"],
-            relevant_doc_ids={"doc1"},
+            expected_answers={"doc1"},
         )
         assert score == 1.0
 
@@ -133,7 +133,7 @@ class TestHitRateEdgeCases:
         metric = HitRate(k=1)
         score = metric.score_query(
             retrieved_doc_ids=["doc1"],
-            relevant_doc_ids={"doc2"},
+            expected_answers={"doc2"},
         )
         assert score == 0.0
 
@@ -147,7 +147,7 @@ class TestHitRateBatchScoring:
                 ["doc_7", "doc_8", "doc_9"],
                 ["doc_4", "doc_5", "doc_6"],
             ],
-            relevant_by_query=[{"doc_2"}, {"doc_11"}, {"doc_6"}],
+            expected_by_query=[{"doc_2"}, {"doc_11"}, {"doc_6"}],
         )
         assert score == 2 / 3
 
@@ -158,7 +158,7 @@ class TestHitRateBatchScoring:
                 ["doc1", "doc2", "doc3"],
                 ["doc4", "doc5", "doc6"],
             ],
-            relevant_by_query=[{"doc1"}, {"doc4"}],
+            expected_by_query=[{"doc1"}, {"doc4"}],
         )
         assert score == 1.0
 
@@ -169,13 +169,13 @@ class TestHitRateBatchScoring:
                 ["doc1", "doc2", "doc3"],
                 ["doc4", "doc5", "doc6"],
             ],
-            relevant_by_query=[{"doc7"}, {"doc8"}],
+            expected_by_query=[{"doc7"}, {"doc8"}],
         )
         assert score == 0.0
 
     def test_empty_batch_returns_zero(self) -> None:
         metric = HitRate(k=5)
-        score = metric.score(retrieved_by_query=[], relevant_by_query=[])
+        score = metric.score(retrieved_by_query=[], expected_by_query=[])
         assert score == 0.0
 
 
@@ -188,7 +188,7 @@ class TestHitRateKParameter:
 
         score = metric.score_query(
             retrieved_doc_ids=retrieved,
-            relevant_doc_ids=relevant,
+            expected_answers=relevant,
         )
         assert score == 1.0
 
@@ -196,7 +196,7 @@ class TestHitRateKParameter:
         metric = HitRate(k=1)
         score = metric.score_query(
             retrieved_doc_ids=["doc1", "doc2"],
-            relevant_doc_ids={"doc1"},
+            expected_answers={"doc1"},
         )
         assert score == 1.0
 
@@ -206,7 +206,7 @@ class TestHitRatePositionInsensitivity:
         metric = HitRate(k=5)
         score = metric.score_query(
             retrieved_doc_ids=["rel", "irr1", "irr2", "irr3", "irr4"],
-            relevant_doc_ids={"rel"},
+            expected_answers={"rel"},
         )
         assert score == 1.0
 
@@ -214,7 +214,7 @@ class TestHitRatePositionInsensitivity:
         metric = HitRate(k=5)
         score = metric.score_query(
             retrieved_doc_ids=["irr1", "irr2", "irr3", "irr4", "rel"],
-            relevant_doc_ids={"rel"},
+            expected_answers={"rel"},
         )
         assert score == 1.0
 
@@ -222,7 +222,7 @@ class TestHitRatePositionInsensitivity:
         metric = HitRate(k=5)
         score = metric.score_query(
             retrieved_doc_ids=["irr1", "irr2", "rel", "irr3", "irr4"],
-            relevant_doc_ids={"rel"},
+            expected_answers={"rel"},
         )
         assert score == 1.0
 
@@ -233,11 +233,11 @@ class TestHitRateVsOtherMetrics:
 
         score_one_relevant = metric.score_query(
             retrieved_doc_ids=["doc1", "doc2", "doc3", "doc4", "doc5"],
-            relevant_doc_ids={"doc1"},
+            expected_answers={"doc1"},
         )
         score_five_relevant = metric.score_query(
             retrieved_doc_ids=["doc1", "doc2", "doc3", "doc4", "doc5"],
-            relevant_doc_ids={"doc1", "doc2", "doc3", "doc4", "doc5"},
+            expected_answers={"doc1", "doc2", "doc3", "doc4", "doc5"},
         )
 
         assert score_one_relevant == score_five_relevant == 1.0

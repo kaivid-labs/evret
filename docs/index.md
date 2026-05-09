@@ -11,13 +11,11 @@ Evret turns retrieved results into metric scores:
 1. Load an evaluation dataset.
 2. Ask your retriever for top-`k` results.
 3. Match retrieved content against gold labels with a judge.
-4. Compute IR metrics over the matched relevant ids.
+4. Compute IR metrics over the matched expected answers.
 5. Export a summary to JSON or CSV.
 
-The evaluator supports two relevance styles:
-
-- `relevant_doc_ids` for classic IR evaluation with known document ids
-- `expected_answers` for judge-based information retrieval evaluation with gold text snippets
+The evaluator uses `expected_answers` as gold text snippets and lets a judge
+decide whether retrieved content matches them.
 
 ## Key Features
 
@@ -37,7 +35,7 @@ dataset = EvaluationDataset.from_json("eval_data.json")
 evaluator = Evaluator(
     retriever=my_retriever,
     metrics=[HitRate(k=4), MRR(k=4), NDCG(k=4)],
-    judge=TokenOverlapJudge(min_tokens=2, overlap_ratio=0.6),
+    judge=TokenOverlapJudge(min_tokens=30, overlap_ratio=0.6),
 )
 
 results = evaluator.evaluate(dataset)

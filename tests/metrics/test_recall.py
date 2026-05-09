@@ -8,7 +8,7 @@ class TestRecallBasicScoring:
         metric = Recall(k=4)
         score = metric.score_query(
             retrieved_doc_ids=["doc1", "doc2", "doc3", "doc4"],
-            relevant_doc_ids={"doc1", "doc2", "doc3", "doc4"},
+            expected_answers={"doc1", "doc2", "doc3", "doc4"},
         )
         assert score == 1.0
 
@@ -16,7 +16,7 @@ class TestRecallBasicScoring:
         metric = Recall(k=3)
         score = metric.score_query(
             retrieved_doc_ids=["doc1", "doc2", "doc3"],
-            relevant_doc_ids={"doc4", "doc5", "doc6"},
+            expected_answers={"doc4", "doc5", "doc6"},
         )
         assert score == 0.0
 
@@ -24,7 +24,7 @@ class TestRecallBasicScoring:
         metric = Recall(k=3)
         score = metric.score_query(
             retrieved_doc_ids=["doc_1", "doc_9", "doc_2", "doc_3"],
-            relevant_doc_ids={"doc_1", "doc_2", "doc_5", "doc_8"},
+            expected_answers={"doc_1", "doc_2", "doc_5", "doc_8"},
         )
         assert score == 0.5
 
@@ -34,7 +34,7 @@ class TestRecallWithKCutoff:
         metric = Recall(k=2)
         score = metric.score_query(
             retrieved_doc_ids=["doc1", "doc2", "doc3", "doc4"],
-            relevant_doc_ids={"doc1", "doc3", "doc4"},
+            expected_answers={"doc1", "doc3", "doc4"},
         )
         assert score == pytest.approx(1 / 3)
 
@@ -42,7 +42,7 @@ class TestRecallWithKCutoff:
         metric = Recall(k=2)
         score = metric.score_query(
             retrieved_doc_ids=["irr1", "irr2", "doc1", "doc2"],
-            relevant_doc_ids={"doc1", "doc2"},
+            expected_answers={"doc1", "doc2"},
         )
         assert score == 0.0
 
@@ -50,7 +50,7 @@ class TestRecallWithKCutoff:
         metric = Recall(k=10)
         score = metric.score_query(
             retrieved_doc_ids=["doc1", "doc2"],
-            relevant_doc_ids={"doc1", "doc2", "doc3", "doc4"},
+            expected_answers={"doc1", "doc2", "doc3", "doc4"},
         )
         assert score == 0.5
 
@@ -60,7 +60,7 @@ class TestRecallEdgeCases:
         metric = Recall(k=5)
         score = metric.score_query(
             retrieved_doc_ids=[],
-            relevant_doc_ids={"doc1", "doc2"},
+            expected_answers={"doc1", "doc2"},
         )
         assert score == 0.0
 
@@ -68,7 +68,7 @@ class TestRecallEdgeCases:
         metric = Recall(k=5)
         score = metric.score_query(
             retrieved_doc_ids=["doc1", "doc2", "doc3"],
-            relevant_doc_ids=set(),
+            expected_answers=set(),
         )
         assert score == 0.0
 
@@ -76,7 +76,7 @@ class TestRecallEdgeCases:
         metric = Recall(k=3)
         score = metric.score_query(
             retrieved_doc_ids=[],
-            relevant_doc_ids=set(),
+            expected_answers=set(),
         )
         assert score == 0.0
 
@@ -84,7 +84,7 @@ class TestRecallEdgeCases:
         metric = Recall(k=3)
         score = metric.score_query(
             retrieved_doc_ids=["doc1", "doc2"],
-            relevant_doc_ids={"doc1"},
+            expected_answers={"doc1"},
         )
         assert score == 1.0
 
@@ -92,7 +92,7 @@ class TestRecallEdgeCases:
         metric = Recall(k=3)
         score = metric.score_query(
             retrieved_doc_ids=["doc1", "doc2"],
-            relevant_doc_ids={"doc3"},
+            expected_answers={"doc3"},
         )
         assert score == 0.0
 
@@ -105,7 +105,7 @@ class TestRecallBatchScoring:
                 ["doc_1", "doc_2", "doc_3"],
                 ["doc_3", "doc_4", "doc_5"],
             ],
-            relevant_by_query=[{"doc_1", "doc_8"}, {"doc_3", "doc_4"}],
+            expected_by_query=[{"doc_1", "doc_8"}, {"doc_3", "doc_4"}],
         )
         assert score == 0.75
 
@@ -117,7 +117,7 @@ class TestRecallBatchScoring:
                 ["doc4", "doc5", "doc6"],
                 ["doc7", "doc8", "doc9"],
             ],
-            relevant_by_query=[
+            expected_by_query=[
                 {"doc1", "doc2", "doc3"},
                 {"doc4", "doc10"},
                 {"doc10", "doc11"},
@@ -127,7 +127,7 @@ class TestRecallBatchScoring:
 
     def test_empty_batch_returns_zero(self) -> None:
         metric = Recall(k=5)
-        score = metric.score(retrieved_by_query=[], relevant_by_query=[])
+        score = metric.score(retrieved_by_query=[], expected_by_query=[])
         assert score == 0.0
 
     def test_batch_length_mismatch_raises(self) -> None:
@@ -135,7 +135,7 @@ class TestRecallBatchScoring:
         with pytest.raises(ValueError, match="same length"):
             metric.score(
                 retrieved_by_query=[["doc_1"], ["doc_2"]],
-                relevant_by_query=[{"doc_1"}],
+                expected_by_query=[{"doc_1"}],
             )
 
 
@@ -147,7 +147,7 @@ class TestRecallKParameter:
         relevant = {f"doc{i}" for i in range(k * 2)}
         score = metric.score_query(
             retrieved_doc_ids=retrieved,
-            relevant_doc_ids=relevant,
+            expected_answers=relevant,
         )
         assert 0.0 <= score <= 1.0
         assert score == 0.5
@@ -156,7 +156,7 @@ class TestRecallKParameter:
         metric = Recall(k=1)
         score = metric.score_query(
             retrieved_doc_ids=["doc1"],
-            relevant_doc_ids={"doc1", "doc2"},
+            expected_answers={"doc1", "doc2"},
         )
         assert score == 0.5
 
@@ -166,7 +166,7 @@ class TestRecallVsPrecisionDifference:
         metric = Recall(k=10)
         score = metric.score_query(
             retrieved_doc_ids=["doc1", "doc2"] + [f"irr{i}" for i in range(8)],
-            relevant_doc_ids={"doc1", "doc2"},
+            expected_answers={"doc1", "doc2"},
         )
         assert score == 1.0
 
@@ -174,7 +174,7 @@ class TestRecallVsPrecisionDifference:
         metric = Recall(k=2)
         score = metric.score_query(
             retrieved_doc_ids=["doc1", "doc2"],
-            relevant_doc_ids={f"doc{i}" for i in range(1, 11)},
+            expected_answers={f"doc{i}" for i in range(1, 11)},
         )
         assert score == 0.2
 
@@ -186,15 +186,15 @@ class TestRecallRankingSensitivity:
 
         score1 = metric.score_query(
             retrieved_doc_ids=["doc1", "doc3", "doc5", "doc2", "doc4"],
-            relevant_doc_ids=relevant,
+            expected_answers=relevant,
         )
         score2 = metric.score_query(
             retrieved_doc_ids=["doc5", "doc3", "doc1", "doc2", "doc4"],
-            relevant_doc_ids=relevant,
+            expected_answers=relevant,
         )
         score3 = metric.score_query(
             retrieved_doc_ids=["doc2", "doc4", "doc1", "doc3", "doc5"],
-            relevant_doc_ids=relevant,
+            expected_answers=relevant,
         )
 
         assert score1 == score2 == score3 == 1.0

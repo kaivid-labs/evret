@@ -39,13 +39,13 @@ class RBP(Metric):
     def score_query(
         self,
         retrieved_doc_ids: Sequence[str],
-        relevant_doc_ids: Collection[str] | dict[str, int],
+        expected_answers: Collection[str] | dict[str, int],
     ) -> float:
         """Score a single query using RBP.
 
         Args:
             retrieved_doc_ids: Ordered list of retrieved document IDs.
-            relevant_doc_ids: Either a set/list of relevant doc IDs (binary relevance)
+            expected_answers: Either a set/list of expected answer IDs (binary relevance)
                             or a dict mapping doc_id → relevance grade.
                             For graded relevance, grades are normalized to [0, 1].
 
@@ -56,9 +56,9 @@ class RBP(Metric):
         if not retrieved_doc_ids:
             return 0.0
 
-        # Convert relevant_doc_ids to relevance mapping
-        if isinstance(relevant_doc_ids, dict):
-            relevance_map = relevant_doc_ids
+        # Convert expected_answers to relevance mapping
+        if isinstance(expected_answers, dict):
+            relevance_map = expected_answers
             if not relevance_map:
                 return 0.0
             # Normalize grades to [0, 1] if they're not already
@@ -69,7 +69,7 @@ class RBP(Metric):
                 }
         else:
             # Binary relevance: 1 for relevant, 0 for irrelevant
-            relevant_set = to_id_set(relevant_doc_ids)
+            relevant_set = to_id_set(expected_answers)
             if not relevant_set:
                 return 0.0
             relevance_map = {doc_id: 1.0 for doc_id in relevant_set}

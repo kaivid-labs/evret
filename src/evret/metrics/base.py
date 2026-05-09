@@ -12,7 +12,7 @@ from evret.utils import require_positive_int
 class Metric(ABC):
     """Base class for metrics evaluated at a top-k cutoff.
 
-    For query ``i`` with retrieved document IDs ``R_i`` and relevant IDs ``G_i``,
+    For query ``i`` with retrieved labels ``R_i`` and expected labels ``G_i``,
     each metric computes a per-query score at ``k`` and then averages:
 
     ``score = (1 / |Q|) * sum(metric_i(R_i[:k], G_i))``
@@ -32,17 +32,17 @@ class Metric(ABC):
     def score_query(
         self,
         retrieved_doc_ids: Sequence[str],
-        relevant_doc_ids: Collection[str],
+        expected_answers: Collection[str],
     ) -> float:
         """Score a single query."""
 
     def score(
         self,
         retrieved_by_query: Sequence[Sequence[str]],
-        relevant_by_query: Sequence[Collection[str]],
+        expected_by_query: Sequence[Collection[str]],
     ) -> float:
         """Score a batch of queries by averaging per-query metric values."""
-        validate_batch_lengths(retrieved_by_query, relevant_by_query)
+        validate_batch_lengths(retrieved_by_query, expected_by_query)
 
         if not retrieved_by_query:
             return 0.0
@@ -50,10 +50,10 @@ class Metric(ABC):
         total_score = 0.0
         num_queries = len(retrieved_by_query)
 
-        for retrieved, relevant in zip(retrieved_by_query, relevant_by_query, strict=True):
+        for retrieved, relevant in zip(retrieved_by_query, expected_by_query, strict=True):
             query_score = self.score_query(
                 retrieved_doc_ids=retrieved,
-                relevant_doc_ids=relevant,
+                expected_answers=relevant,
             )
             total_score += query_score
 

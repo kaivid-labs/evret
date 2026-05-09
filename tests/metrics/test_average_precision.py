@@ -8,7 +8,7 @@ class TestAveragePrecisionBasicScoring:
         metric = AveragePrecision(k=3)
         score = metric.score_query(
             retrieved_doc_ids=["doc1", "doc2", "doc3"],
-            relevant_doc_ids={"doc1", "doc2", "doc3"},
+            expected_answers={"doc1", "doc2", "doc3"},
         )
         assert score == 1.0
 
@@ -16,7 +16,7 @@ class TestAveragePrecisionBasicScoring:
         metric = AveragePrecision(k=3)
         score = metric.score_query(
             retrieved_doc_ids=["doc1", "doc2", "doc3"],
-            relevant_doc_ids={"doc4", "doc5"},
+            expected_answers={"doc4", "doc5"},
         )
         assert score == 0.0
 
@@ -24,7 +24,7 @@ class TestAveragePrecisionBasicScoring:
         metric = AveragePrecision(k=5)
         score = metric.score_query(
             retrieved_doc_ids=["a", "b", "c", "d", "e"],
-            relevant_doc_ids={"a", "c", "f"},
+            expected_answers={"a", "c", "f"},
         )
         assert score == pytest.approx(0.5555555556, rel=1e-9)
 
@@ -34,20 +34,20 @@ class TestAveragePrecisionInterpolation:
         metric = AveragePrecision(k=4)
         score = metric.score_query(
             retrieved_doc_ids=["d4", "d1", "d2", "d3"],
-            relevant_doc_ids={"d1", "d2"},
+            expected_answers={"d1", "d2"},
         )
         assert score == pytest.approx(0.5833333333, rel=1e-9)
 
-    def test_early_relevant_docs_weighted_more(self) -> None:
+    def test_early_expected_answers_weighted_more(self) -> None:
         metric = AveragePrecision(k=5)
 
         score_early = metric.score_query(
             retrieved_doc_ids=["rel1", "rel2", "irr1", "irr2", "irr3"],
-            relevant_doc_ids={"rel1", "rel2"},
+            expected_answers={"rel1", "rel2"},
         )
         score_late = metric.score_query(
             retrieved_doc_ids=["irr1", "irr2", "irr3", "rel1", "rel2"],
-            relevant_doc_ids={"rel1", "rel2"},
+            expected_answers={"rel1", "rel2"},
         )
 
         assert score_early > score_late
@@ -58,7 +58,7 @@ class TestAveragePrecisionWithKCutoff:
         metric = AveragePrecision(k=3)
         score = metric.score_query(
             retrieved_doc_ids=["a", "x", "y", "b"],
-            relevant_doc_ids={"a", "b"},
+            expected_answers={"a", "b"},
         )
         assert score == 0.5
 
@@ -66,7 +66,7 @@ class TestAveragePrecisionWithKCutoff:
         metric = AveragePrecision(k=2)
         score = metric.score_query(
             retrieved_doc_ids=["irr1", "irr2", "rel1", "rel2"],
-            relevant_doc_ids={"rel1", "rel2"},
+            expected_answers={"rel1", "rel2"},
         )
         assert score == 0.0
 
@@ -74,7 +74,7 @@ class TestAveragePrecisionWithKCutoff:
         metric = AveragePrecision(k=10)
         score = metric.score_query(
             retrieved_doc_ids=["doc1", "doc2"],
-            relevant_doc_ids={"doc1", "doc2"},
+            expected_answers={"doc1", "doc2"},
         )
         assert score == 1.0
 
@@ -84,7 +84,7 @@ class TestAveragePrecisionEdgeCases:
         metric = AveragePrecision(k=5)
         score = metric.score_query(
             retrieved_doc_ids=[],
-            relevant_doc_ids={"doc1", "doc2"},
+            expected_answers={"doc1", "doc2"},
         )
         assert score == 0.0
 
@@ -92,7 +92,7 @@ class TestAveragePrecisionEdgeCases:
         metric = AveragePrecision(k=3)
         score = metric.score_query(
             retrieved_doc_ids=["doc1", "doc2", "doc3"],
-            relevant_doc_ids=set(),
+            expected_answers=set(),
         )
         assert score == 0.0
 
@@ -100,7 +100,7 @@ class TestAveragePrecisionEdgeCases:
         metric = AveragePrecision(k=3)
         score = metric.score_query(
             retrieved_doc_ids=[],
-            relevant_doc_ids=set(),
+            expected_answers=set(),
         )
         assert score == 0.0
 
@@ -108,7 +108,7 @@ class TestAveragePrecisionEdgeCases:
         metric = AveragePrecision(k=3)
         score = metric.score_query(
             retrieved_doc_ids=["doc1", "doc2", "doc3"],
-            relevant_doc_ids={"doc1"},
+            expected_answers={"doc1"},
         )
         assert score == 1.0
 
@@ -116,7 +116,7 @@ class TestAveragePrecisionEdgeCases:
         metric = AveragePrecision(k=3)
         score = metric.score_query(
             retrieved_doc_ids=["doc1", "doc2", "doc3"],
-            relevant_doc_ids={"doc4"},
+            expected_answers={"doc4"},
         )
         assert score == 0.0
 
@@ -129,7 +129,7 @@ class TestAveragePrecisionBatchScoring:
                 ["a", "b", "c", "d"],
                 ["x", "y", "z", "w"],
             ],
-            relevant_by_query=[
+            expected_by_query=[
                 {"a", "c"},
                 {"q"},
             ],
@@ -144,7 +144,7 @@ class TestAveragePrecisionBatchScoring:
                 ["doc4", "doc5", "doc6"],
                 ["doc7", "doc8", "doc9"],
             ],
-            relevant_by_query=[
+            expected_by_query=[
                 {"doc1", "doc2", "doc3"},
                 {"doc4"},
                 set(),
@@ -155,7 +155,7 @@ class TestAveragePrecisionBatchScoring:
 
     def test_empty_batch_returns_zero(self) -> None:
         metric = AveragePrecision(k=5)
-        score = metric.score(retrieved_by_query=[], relevant_by_query=[])
+        score = metric.score(retrieved_by_query=[], expected_by_query=[])
         assert score == 0.0
 
 
@@ -168,7 +168,7 @@ class TestAveragePrecisionKParameter:
 
         score = metric.score_query(
             retrieved_doc_ids=retrieved,
-            relevant_doc_ids=relevant,
+            expected_answers=relevant,
         )
         assert score == 1.0
 
@@ -176,7 +176,7 @@ class TestAveragePrecisionKParameter:
         metric = AveragePrecision(k=1)
         score = metric.score_query(
             retrieved_doc_ids=["doc1", "doc2"],
-            relevant_doc_ids={"doc1"},
+            expected_answers={"doc1"},
         )
         assert score == 1.0
 
@@ -187,11 +187,11 @@ class TestAveragePrecisionRankingSensitivity:
 
         score_good = metric.score_query(
             retrieved_doc_ids=["rel1", "rel2", "irr1", "irr2", "irr3"],
-            relevant_doc_ids={"rel1", "rel2"},
+            expected_answers={"rel1", "rel2"},
         )
         score_bad = metric.score_query(
             retrieved_doc_ids=["irr1", "irr2", "irr3", "rel1", "rel2"],
-            relevant_doc_ids={"rel1", "rel2"},
+            expected_answers={"rel1", "rel2"},
         )
 
         assert score_good > score_bad
@@ -201,15 +201,15 @@ class TestAveragePrecisionRankingSensitivity:
 
         score1 = metric.score_query(
             retrieved_doc_ids=["rel", "irr1", "irr2", "irr3"],
-            relevant_doc_ids={"rel"},
+            expected_answers={"rel"},
         )
         score2 = metric.score_query(
             retrieved_doc_ids=["irr1", "rel", "irr2", "irr3"],
-            relevant_doc_ids={"rel"},
+            expected_answers={"rel"},
         )
         score3 = metric.score_query(
             retrieved_doc_ids=["irr1", "irr2", "rel", "irr3"],
-            relevant_doc_ids={"rel"},
+            expected_answers={"rel"},
         )
 
         assert score1 > score2 > score3
@@ -221,7 +221,7 @@ class TestAveragePrecisionSemantics:
 
         score = metric.score_query(
             retrieved_doc_ids=["rel1", "irr1", "rel2", "irr2", "irr3"],
-            relevant_doc_ids={"rel1", "rel2"},
+            expected_answers={"rel1", "rel2"},
         )
 
         precision_at_1 = 1 / 1
@@ -235,11 +235,11 @@ class TestAveragePrecisionSemantics:
 
         score_two_relevant = metric.score_query(
             retrieved_doc_ids=["rel1", "rel2", "irr1", "irr2", "irr3"],
-            relevant_doc_ids={"rel1", "rel2"},
+            expected_answers={"rel1", "rel2"},
         )
         score_four_relevant = metric.score_query(
             retrieved_doc_ids=["rel1", "rel2", "irr1", "irr2", "irr3"],
-            relevant_doc_ids={"rel1", "rel2", "rel3", "rel4"},
+            expected_answers={"rel1", "rel2", "rel3", "rel4"},
         )
 
         assert score_two_relevant == 1.0
@@ -256,6 +256,6 @@ class TestAveragePrecisionBoundary:
 
             score = metric.score_query(
                 retrieved_doc_ids=retrieved,
-                relevant_doc_ids=relevant,
+                expected_answers=relevant,
             )
             assert 0.0 <= score <= 1.0

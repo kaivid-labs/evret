@@ -13,18 +13,18 @@ class TestERRBasicScoring:
         metric = ERR(k=5, max_grade=4)
         score = metric.score_query(
             retrieved_doc_ids=["d1", "d2", "d3", "d4", "d5"],
-            relevant_doc_ids={"d1": 4},  # Max grade at position 1
+            expected_answers={"d1": 4},  # Max grade at position 1
         )
         # With grade 4 at position 1: R(1) = (2^4 - 1) / 2^4 = 15/16 = 0.9375
         # ERR = (1/1) × 0.9375 × 1 = 0.9375
         assert score == pytest.approx(0.9375, rel=1e-6)
 
     def test_zero_err_no_relevant(self) -> None:
-        """ERR should be 0 when no relevant documents."""
+        """ERR should be 0 when no expected answeruments."""
         metric = ERR(k=5, max_grade=4)
         score = metric.score_query(
             retrieved_doc_ids=["d1", "d2", "d3"],
-            relevant_doc_ids={},
+            expected_answers={},
         )
         assert score == 0.0
 
@@ -33,7 +33,7 @@ class TestERRBasicScoring:
         metric = ERR(k=5, max_grade=4)
         score = metric.score_query(
             retrieved_doc_ids=[],
-            relevant_doc_ids={"d1": 4},
+            expected_answers={"d1": 4},
         )
         assert score == 0.0
 
@@ -42,7 +42,7 @@ class TestERRBasicScoring:
         metric = ERR(k=3, max_grade=4)
         score = metric.score_query(
             retrieved_doc_ids=["d1", "d2", "d3"],
-            relevant_doc_ids={"d1"},  # Binary: grade 1
+            expected_answers={"d1"},  # Binary: grade 1
         )
         # R(1) = (2^1 - 1) / 2^4 = 1/16 = 0.0625
         # ERR = (1/1) × 0.0625 × 1 = 0.0625
@@ -58,15 +58,15 @@ class TestERRGradedRelevance:
 
         score_grade_1 = metric.score_query(
             retrieved_doc_ids=["d1"],
-            relevant_doc_ids={"d1": 1},
+            expected_answers={"d1": 1},
         )
         score_grade_2 = metric.score_query(
             retrieved_doc_ids=["d1"],
-            relevant_doc_ids={"d1": 2},
+            expected_answers={"d1": 2},
         )
         score_grade_4 = metric.score_query(
             retrieved_doc_ids=["d1"],
-            relevant_doc_ids={"d1": 4},
+            expected_answers={"d1": 4},
         )
 
         assert score_grade_1 < score_grade_2 < score_grade_4
@@ -77,7 +77,7 @@ class TestERRGradedRelevance:
         # Rank 1: grade=3, Rank 2: grade=4, Rank 3: grade=1
         score = metric.score_query(
             retrieved_doc_ids=["d1", "d2", "d3"],
-            relevant_doc_ids={"d1": 3, "d2": 4, "d3": 1},
+            expected_answers={"d1": 3, "d2": 4, "d3": 1},
         )
         # R(1) = (2^3 - 1) / 2^4 = 7/16 = 0.4375
         # R(2) = (2^4 - 1) / 2^4 = 15/16 = 0.9375
@@ -95,7 +95,7 @@ class TestERRGradedRelevance:
         metric = ERR(k=3, max_grade=4)
         score = metric.score_query(
             retrieved_doc_ids=["d1", "d2", "d3"],
-            relevant_doc_ids={"d1": 0, "d2": 4},
+            expected_answers={"d1": 0, "d2": 4},
         )
         # Position 1: grade 0, R(1) = 0
         # Position 2: grade 4, R(2) = 0.9375
@@ -113,11 +113,11 @@ class TestERRCascadeModel:
         # Same grade at different positions
         score_position_1 = metric.score_query(
             retrieved_doc_ids=["d1", "d2", "d3"],
-            relevant_doc_ids={"d1": 2},
+            expected_answers={"d1": 2},
         )
         score_position_3 = metric.score_query(
             retrieved_doc_ids=["d1", "d2", "d3"],
-            relevant_doc_ids={"d3": 2},
+            expected_answers={"d3": 2},
         )
 
         assert score_position_1 > score_position_3
@@ -129,12 +129,12 @@ class TestERRCascadeModel:
         # Max grade at position 1 (blocks later)
         score_top_heavy = metric.score_query(
             retrieved_doc_ids=["d1", "d2", "d3", "d4", "d5"],
-            relevant_doc_ids={"d1": 4, "d5": 4},
+            expected_answers={"d1": 4, "d5": 4},
         )
         # Max grade at position 5 (no blocking)
         score_bottom_heavy = metric.score_query(
             retrieved_doc_ids=["d1", "d2", "d3", "d4", "d5"],
-            relevant_doc_ids={"d5": 4},
+            expected_answers={"d5": 4},
         )
 
         # Top-heavy should have higher score due to position weighting
@@ -149,7 +149,7 @@ class TestERRWithKCutoff:
         metric = ERR(k=2, max_grade=4)
         score = metric.score_query(
             retrieved_doc_ids=["d1", "d2", "d3", "d4"],
-            relevant_doc_ids={"d1": 4, "d2": 3},
+            expected_answers={"d1": 4, "d2": 3},
         )
         # Only positions 1 and 2 are considered
         # R(1) = 0.9375, R(2) = 0.4375
@@ -158,11 +158,11 @@ class TestERRWithKCutoff:
         assert score == pytest.approx(expected, rel=1e-6)
 
     def test_relevant_beyond_k_ignored(self) -> None:
-        """Relevant docs beyond k should be ignored."""
+        """Expected answers beyond k should be ignored."""
         metric = ERR(k=2, max_grade=4)
         score = metric.score_query(
             retrieved_doc_ids=["d1", "d2", "d3", "d4"],
-            relevant_doc_ids={"d3": 4, "d4": 4},  # Beyond k=2
+            expected_answers={"d3": 4, "d4": 4},  # Beyond k=2
         )
         assert score == 0.0
 
@@ -171,7 +171,7 @@ class TestERRWithKCutoff:
         metric = ERR(k=10, max_grade=4)
         score = metric.score_query(
             retrieved_doc_ids=["d1", "d2"],
-            relevant_doc_ids={"d1": 4},
+            expected_answers={"d1": 4},
         )
         assert score == pytest.approx(0.9375, rel=1e-6)
 
@@ -184,7 +184,7 @@ class TestERREdgeCases:
         metric = ERR(k=5, max_grade=4)
         score = metric.score_query(
             retrieved_doc_ids=[],
-            relevant_doc_ids={},
+            expected_answers={},
         )
         assert score == 0.0
 
@@ -193,7 +193,7 @@ class TestERREdgeCases:
         metric = ERR(k=1, max_grade=4)
         score = metric.score_query(
             retrieved_doc_ids=["d1"],
-            relevant_doc_ids={"d1": 4},
+            expected_answers={"d1": 4},
         )
         assert score == pytest.approx(0.9375, rel=1e-6)
 
@@ -203,7 +203,7 @@ class TestERREdgeCases:
         # Implementation should handle this gracefully
         score = metric.score_query(
             retrieved_doc_ids=["d1"],
-            relevant_doc_ids={"d1": -1},
+            expected_answers={"d1": -1},
         )
         assert score == 0.0
 
@@ -213,7 +213,7 @@ class TestERREdgeCases:
         # Grade 5 should be clamped to 4
         score = metric.score_query(
             retrieved_doc_ids=["d1"],
-            relevant_doc_ids={"d1": 5},
+            expected_answers={"d1": 5},
         )
         expected_max_grade = (2**4 - 1) / 2**4
         assert score == pytest.approx(expected_max_grade, rel=1e-6)
@@ -230,7 +230,7 @@ class TestERRBatchScoring:
                 ["d1", "d2", "d3"],
                 ["d4", "d5", "d6"],
             ],
-            relevant_by_query=[
+            expected_by_query=[
                 {"d1": 4},
                 {"d6": 2},
             ],
@@ -243,7 +243,7 @@ class TestERRBatchScoring:
     def test_empty_batch_returns_zero(self) -> None:
         """Empty batch should return 0."""
         metric = ERR(k=5, max_grade=4)
-        score = metric.score(retrieved_by_query=[], relevant_by_query=[])
+        score = metric.score(retrieved_by_query=[], expected_by_query=[])
         assert score == 0.0
 
 
@@ -256,7 +256,7 @@ class TestERRMaxGradeParameter:
         metric = ERR(k=3, max_grade=max_grade)
         score = metric.score_query(
             retrieved_doc_ids=["d1", "d2"],
-            relevant_doc_ids={"d1": max_grade},
+            expected_answers={"d1": max_grade},
         )
         # R(1) = (2^max_grade - 1) / 2^max_grade
         expected = (2**max_grade - 1) / 2**max_grade
@@ -316,11 +316,11 @@ class TestERRVsOtherMetrics:
 
         score_good_order = metric.score_query(
             retrieved_doc_ids=["d1", "d2", "d3"],
-            relevant_doc_ids={"d1": 4, "d3": 2},
+            expected_answers={"d1": 4, "d3": 2},
         )
         score_bad_order = metric.score_query(
             retrieved_doc_ids=["d2", "d3", "d1"],
-            relevant_doc_ids={"d1": 4, "d3": 2},
+            expected_answers={"d1": 4, "d3": 2},
         )
 
         # Higher grade at top should yield higher ERR
@@ -332,11 +332,11 @@ class TestERRVsOtherMetrics:
 
         score_high_grades = metric.score_query(
             retrieved_doc_ids=["d1", "d2"],
-            relevant_doc_ids={"d1": 4, "d2": 4},
+            expected_answers={"d1": 4, "d2": 4},
         )
         score_low_grades = metric.score_query(
             retrieved_doc_ids=["d1", "d2"],
-            relevant_doc_ids={"d1": 1, "d2": 1},
+            expected_answers={"d1": 1, "d2": 1},
         )
 
         assert score_high_grades > score_low_grades

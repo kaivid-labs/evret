@@ -46,14 +46,14 @@ def compute_idcg(
 
 
 def compute_idcg_from_relevant_set(
-    relevant_doc_ids: Collection[str],
+    expected_answers: Collection[str],
     k: int,
     default_relevance: float = 1.0,
 ) -> float:
-    if not relevant_doc_ids:
+    if not expected_answers:
         return 0.0
 
-    num_relevant = len(relevant_doc_ids)
+    num_relevant = len(expected_answers)
     cutoff = min(k, num_relevant)
 
     relevances = [default_relevance] * cutoff
@@ -61,10 +61,10 @@ def compute_idcg_from_relevant_set(
 
 
 def build_binary_relevance_map(
-    relevant_doc_ids: Collection[str],
+    expected_answers: Collection[str],
     relevance_value: float = 1.0,
 ) -> dict[str, float]:
-    return {doc_id: relevance_value for doc_id in relevant_doc_ids}
+    return {doc_id: relevance_value for doc_id in expected_answers}
 
 
 def build_graded_relevance_map(

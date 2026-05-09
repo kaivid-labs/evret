@@ -8,7 +8,7 @@ class TestPrecisionBasicScoring:
         metric = Precision(k=3)
         score = metric.score_query(
             retrieved_doc_ids=["doc1", "doc2", "doc3"],
-            relevant_doc_ids={"doc1", "doc2", "doc3"},
+            expected_answers={"doc1", "doc2", "doc3"},
         )
         assert score == 1.0
 
@@ -16,7 +16,7 @@ class TestPrecisionBasicScoring:
         metric = Precision(k=3)
         score = metric.score_query(
             retrieved_doc_ids=["doc1", "doc2", "doc3"],
-            relevant_doc_ids={"doc4", "doc5"},
+            expected_answers={"doc4", "doc5"},
         )
         assert score == 0.0
 
@@ -24,7 +24,7 @@ class TestPrecisionBasicScoring:
         metric = Precision(k=4)
         score = metric.score_query(
             retrieved_doc_ids=["doc_1", "doc_3", "doc_5", "doc_9", "doc_10"],
-            relevant_doc_ids={"doc_1", "doc_9", "doc_88"},
+            expected_answers={"doc_1", "doc_9", "doc_88"},
         )
         assert score == 0.5
 
@@ -34,7 +34,7 @@ class TestPrecisionDenominatorBehavior:
         metric = Precision(k=5)
         score = metric.score_query(
             retrieved_doc_ids=["doc_1", "doc_2"],
-            relevant_doc_ids={"doc_1", "doc_2"},
+            expected_answers={"doc_1", "doc_2"},
         )
         assert score == 0.4
 
@@ -42,7 +42,7 @@ class TestPrecisionDenominatorBehavior:
         metric = Precision(k=2)
         score = metric.score_query(
             retrieved_doc_ids=["doc1", "doc2", "doc3", "doc4"],
-            relevant_doc_ids={"doc1", "doc2"},
+            expected_answers={"doc1", "doc2"},
         )
         assert score == 1.0
 
@@ -52,7 +52,7 @@ class TestPrecisionEdgeCases:
         metric = Precision(k=5)
         score = metric.score_query(
             retrieved_doc_ids=[],
-            relevant_doc_ids={"doc1", "doc2"},
+            expected_answers={"doc1", "doc2"},
         )
         assert score == 0.0
 
@@ -60,7 +60,7 @@ class TestPrecisionEdgeCases:
         metric = Precision(k=3)
         score = metric.score_query(
             retrieved_doc_ids=["doc1", "doc2", "doc3"],
-            relevant_doc_ids=set(),
+            expected_answers=set(),
         )
         assert score == 0.0
 
@@ -68,7 +68,7 @@ class TestPrecisionEdgeCases:
         metric = Precision(k=3)
         score = metric.score_query(
             retrieved_doc_ids=[],
-            relevant_doc_ids=set(),
+            expected_answers=set(),
         )
         assert score == 0.0
 
@@ -76,7 +76,7 @@ class TestPrecisionEdgeCases:
         metric = Precision(k=1)
         score = metric.score_query(
             retrieved_doc_ids=["doc1"],
-            relevant_doc_ids={"doc1"},
+            expected_answers={"doc1"},
         )
         assert score == 1.0
 
@@ -84,7 +84,7 @@ class TestPrecisionEdgeCases:
         metric = Precision(k=1)
         score = metric.score_query(
             retrieved_doc_ids=["doc1"],
-            relevant_doc_ids={"doc2"},
+            expected_answers={"doc2"},
         )
         assert score == 0.0
 
@@ -97,7 +97,7 @@ class TestPrecisionBatchScoring:
                 ["doc_a", "doc_b", "doc_c"],
                 ["doc_1", "doc_2", "doc_3"],
             ],
-            relevant_by_query=[{"doc_a", "doc_d"}, {"doc_9"}],
+            expected_by_query=[{"doc_a", "doc_d"}, {"doc_9"}],
         )
         assert score == (1 / 3) / 2
 
@@ -109,7 +109,7 @@ class TestPrecisionBatchScoring:
                 ["doc4", "doc5", "doc6"],
                 ["doc7", "doc8", "doc9"],
             ],
-            relevant_by_query=[
+            expected_by_query=[
                 {"doc1", "doc2", "doc3"},
                 {"doc4"},
                 set(),
@@ -120,7 +120,7 @@ class TestPrecisionBatchScoring:
 
     def test_empty_batch_returns_zero(self) -> None:
         metric = Precision(k=5)
-        score = metric.score(retrieved_by_query=[], relevant_by_query=[])
+        score = metric.score(retrieved_by_query=[], expected_by_query=[])
         assert score == 0.0
 
 
@@ -132,7 +132,7 @@ class TestPrecisionKParameter:
         relevant = {f"doc{i}" for i in range(0, k * 2, 2)}
         score = metric.score_query(
             retrieved_doc_ids=retrieved,
-            relevant_doc_ids=relevant,
+            expected_answers=relevant,
         )
         assert 0.0 <= score <= 1.0
 
@@ -140,7 +140,7 @@ class TestPrecisionKParameter:
         metric = Precision(k=1)
         score = metric.score_query(
             retrieved_doc_ids=["doc1", "doc2"],
-            relevant_doc_ids={"doc1"},
+            expected_answers={"doc1"},
         )
         assert score == 1.0
 
@@ -148,7 +148,7 @@ class TestPrecisionKParameter:
         metric = Precision(k=1000)
         score = metric.score_query(
             retrieved_doc_ids=["doc1", "doc2"],
-            relevant_doc_ids={"doc1", "doc2"},
+            expected_answers={"doc1", "doc2"},
         )
         assert score == 0.002
 
@@ -158,7 +158,7 @@ class TestPrecisionRankingPosition:
         metric = Precision(k=5)
         score = metric.score_query(
             retrieved_doc_ids=["rel1", "rel2", "irr1", "irr2", "irr3"],
-            relevant_doc_ids={"rel1", "rel2"},
+            expected_answers={"rel1", "rel2"},
         )
         assert score == 0.4
 
@@ -166,7 +166,7 @@ class TestPrecisionRankingPosition:
         metric = Precision(k=5)
         score = metric.score_query(
             retrieved_doc_ids=["irr1", "irr2", "irr3", "rel1", "rel2"],
-            relevant_doc_ids={"rel1", "rel2"},
+            expected_answers={"rel1", "rel2"},
         )
         assert score == 0.4
 
@@ -174,6 +174,6 @@ class TestPrecisionRankingPosition:
         metric = Precision(k=3)
         score = metric.score_query(
             retrieved_doc_ids=["doc1", "doc2", "doc3", "doc4", "doc5"],
-            relevant_doc_ids={"doc4", "doc5"},
+            expected_answers={"doc4", "doc5"},
         )
         assert score == 0.0

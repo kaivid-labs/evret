@@ -50,6 +50,8 @@ nav:
       - Precision: metrics/precision.md
       - MRR: metrics/mrr.md
       - nDCG: metrics/ndcg.md
+      - ERR: metrics/err.md
+      - RBP: metrics/rbp.md
       - Average Precision: metrics/average-precision.md
   - Evaluation:
       - Evaluation Overview: evaluation/overview.md

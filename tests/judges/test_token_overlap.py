@@ -142,7 +142,7 @@ class TestTokenOverlapJudge:
 
     def test_special_characters(self):
         """Test handling of special characters."""
-        judge = TokenOverlapJudge()
+        judge = TokenOverlapJudge(min_tokens=2, overlap_ratio=0.6)
         context = JudgmentContext(
             query="test",
             expected_text="retrieval-augmented generation (RAG)",
@@ -152,10 +152,62 @@ class TestTokenOverlapJudge:
 
     def test_numeric_tokens(self):
         """Test handling of numeric tokens."""
-        judge = TokenOverlapJudge()
+        judge = TokenOverlapJudge(min_tokens=2, overlap_ratio=0.6)
         context = JudgmentContext(
             query="model version",
             expected_text="gpt 4 model",
             retrieved_text="gpt 4 turbo model",
         )
         assert judge.judge(context) is True
+
+    def test_stopwords_do_not_create_false_match(self):
+        """Test that common words alone do not create a match."""
+        judge = TokenOverlapJudge(min_tokens=1, overlap_ratio=0.5)
+        context = JudgmentContext(
+            query="what is the policy",
+            expected_text="the manager approval policy",
+            retrieved_text="the cafeteria menu is updated",
+        )
+        assert judge.judge(context) is False
+
+    def test_weighted_overlap_rewards_specific_tokens(self):
+        """Test that specific long tokens carry more weight."""
+        judge = TokenOverlapJudge(min_tokens=2, overlap_ratio=0.65)
+        context = JudgmentContext(
+            query="hotel reimbursement",
+            expected_text="hotel reimbursement exception approval",
+            retrieved_text="reimbursement exception details are handled by finance",
+        )
+        assert judge.judge(context) is True
+
+    def test_phrase_match_bonus_helps_borderline_match(self):
+        """Test exact phrase overlap can pass a borderline token score."""
+        judge = TokenOverlapJudge(min_tokens=2, overlap_ratio=0.65, query_boost=False)
+        context = JudgmentContext(
+            query="approval policy",
+            expected_text="manager approval required travel booking",
+            retrieved_text="manager approval required for expensive flights",
+        )
+        assert judge.judge(context) is True
+
+    def test_negation_mismatch_penalizes_match(self):
+        """Test contradictory negation reduces otherwise high overlap."""
+        judge = TokenOverlapJudge(min_tokens=2, overlap_ratio=0.8)
+        context = JudgmentContext(
+            query="manager approval",
+            expected_text="manager approval is required",
+            retrieved_text="manager approval is not required",
+        )
+        assert judge.judge(context) is False
+
+    def test_score_returns_float_between_zero_and_one(self):
+        """Test score API for debugging judge decisions."""
+        judge = TokenOverlapJudge()
+        context = JudgmentContext(
+            query="travel expenses",
+            expected_text="submit travel expenses within 30 days",
+            retrieved_text="employees submit expenses after the trip",
+        )
+        score = judge.score(context)
+        assert isinstance(score, float)
+        assert 0.0 <= score <= 1.0

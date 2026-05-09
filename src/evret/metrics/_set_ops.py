@@ -7,20 +7,20 @@ from collections.abc import Collection, Sequence
 
 def compute_intersection_size(
     retrieved_ids: Collection[str],
-    relevant_ids: Collection[str],
+    expected_answers: Collection[str],
 ) -> int:
     retrieved_set = retrieved_ids if isinstance(retrieved_ids, set) else set(retrieved_ids)
-    relevant_set = relevant_ids if isinstance(relevant_ids, set) else set(relevant_ids)
-    return len(retrieved_set & relevant_set)
+    expected_set = expected_answers if isinstance(expected_answers, set) else set(expected_answers)
+    return len(retrieved_set & expected_set)
 
 
 def compute_intersection(
     retrieved_ids: Collection[str],
-    relevant_ids: Collection[str],
+    expected_answers: Collection[str],
 ) -> set[str]:
     retrieved_set = retrieved_ids if isinstance(retrieved_ids, set) else set(retrieved_ids)
-    relevant_set = relevant_ids if isinstance(relevant_ids, set) else set(relevant_ids)
-    return retrieved_set & relevant_set
+    expected_set = expected_answers if isinstance(expected_answers, set) else set(expected_answers)
+    return retrieved_set & expected_set
 
 
 def to_id_set(doc_ids: Collection[str]) -> set[str]:
@@ -37,8 +37,8 @@ def extract_top_k_set(
 
 def has_intersection(
     retrieved_ids: Collection[str],
-    relevant_ids: Collection[str],
+    expected_answers: Collection[str],
 ) -> bool:
     retrieved_set = retrieved_ids if isinstance(retrieved_ids, set) else set(retrieved_ids)
-    relevant_set = relevant_ids if isinstance(relevant_ids, set) else set(relevant_ids)
-    return bool(retrieved_set & relevant_set)
+    expected_set = expected_answers if isinstance(expected_answers, set) else set(expected_answers)
+    return bool(retrieved_set & expected_set)

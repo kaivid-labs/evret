@@ -21,13 +21,13 @@ class Precision(Metric):
     def score_query(
         self,
         retrieved_doc_ids: Sequence[str],
-        relevant_doc_ids: Collection[str],
+        expected_answers: Collection[str],
     ) -> float:
         if not retrieved_doc_ids:
             return 0.0
 
         top_k_set = extract_top_k_set(retrieved_doc_ids, self.k)
-        relevant_set = to_id_set(relevant_doc_ids)
+        relevant_set = to_id_set(expected_answers)
 
         if not relevant_set:
             return 0.0

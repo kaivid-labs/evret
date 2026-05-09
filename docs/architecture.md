@@ -57,16 +57,16 @@ Evret implements a **judge-based architecture** for text-based relevance matchin
                              ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                      EVALUATOR                                   │
-│  Maps boolean judgments → ID sets                                │
+│  Maps boolean judgments → expected answer labels                 │
 │                                                                  │
-│  retrieved_ids = ["relevant_doc_1", "relevant_doc_2", ...]      │
-│  relevant_ids = {"relevant_doc_1", "relevant_doc_2"}            │
+│  retrieved_labels = ["expected_1", "expected_2", ...]           │
+│  expected_labels = {"expected_1", "expected_2"}                 │
 └────────────────────────────┬────────────────────────────────────┘
                              │
                              ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                       METRICS                                    │
-│  Compute standard IR metrics on ID sets                          │
+│  Compute standard IR metrics on matched labels                   │
 │                                                                  │
 │  - Precision@k = |relevant ∩ retrieved[:k]| / k                 │
 │  - Recall@k = |relevant ∩ retrieved[:k]| / |relevant|           │
@@ -145,15 +145,15 @@ Evret implements a **judge-based architecture** for text-based relevance matchin
                              │
                              ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  Step 4: Map Judgments to IDs                                    │
+│  Step 4: Map Judgments to Expected Labels                        │
 │  ─────────────────────────────                                   │
 │  For each query:                                                 │
 │    For each retrieved result:                                    │
 │      Find first matching expected text (judgment=True)           │
-│      Assign matched ID to retrieved result                       │
+│      Assign matched expected label to retrieved result           │
 │                                                                  │
-│  retrieved_ids = ["relevant_1", "relevant_2", "irrelevant_0"]   │
-│  relevant_ids = {"relevant_1", "relevant_2"}                    │
+│  retrieved_labels = ["expected_1", "expected_2", "retrieved_0"] │
+│  expected_labels = {"expected_1", "expected_2"}                 │
 └────────────────────────────┬────────────────────────────────────┘
                              │
                              ▼
@@ -161,7 +161,7 @@ Evret implements a **judge-based architecture** for text-based relevance matchin
 │  Step 5: Compute Metrics                                         │
 │  ────────────────────────                                        │
 │  For each metric:                                                │
-│    score = metric.score(retrieved_ids, relevant_ids)            │
+│    score = metric.score(retrieved_labels, expected_labels)      │
 │                                                                  │
 │  Results: {"recall@4": 0.75, "precision@4": 0.5, ...}          │
 └─────────────────────────────────────────────────────────────────┘
@@ -214,7 +214,7 @@ recall = len({"doc_1", "doc_2"}) / 3 = 0.667
                              ▼
 ┌─────────────────────────────────────────────────────────────┐
 │  Metrics: Answers "How good is the retrieval?"              │
-│  • Input: (retrieved_ids, relevant_ids)                     │
+│  • Input: (retrieved_labels, expected_labels)              │
 │  • Output: Metric score (0.0 to 1.0)                       │
 │  • Responsibility: Ranking quality measurement             │
 └─────────────────────────────────────────────────────────────┘
@@ -330,28 +330,29 @@ Step 1: Exact Match Check
 ├─ IF normalized(expected_text) == normalized(retrieved_text)
 │  └─ RETURN True
 │
-Step 2: Substring Match
+Step 2: Negation Check
+├─ IF expected_text and retrieved_text disagree on negation
+│  └─ RETURN False
+│
+Step 3: Substring Match
 ├─ IF expected_text in retrieved_text OR retrieved_text in expected_text
 │  └─ RETURN True
 │
-Step 3: Token Overlap Computation
-├─ expected_tokens = tokenize(expected_text)
-├─ retrieved_tokens = tokenize(retrieved_text)
+Step 4: Stopword Filtering
+├─ expected_tokens = content_tokens(expected_text)
+├─ retrieved_tokens = content_tokens(retrieved_text)
 ├─ shared_tokens = expected_tokens ∩ retrieved_tokens
 │
 ├─ IF len(shared_tokens) < min_tokens
 │  └─ RETURN False
 │
-├─ overlap_ratio = len(shared_tokens) / len(expected_tokens)
+Step 5: Weighted Score
+├─ score = weighted_overlap(shared_tokens, expected_tokens)
+├─ score += phrase_match_bonus(expected_text, retrieved_text)
+├─ IF query_boost AND query shares tokens
+│  └─ score += query_bonus
 │
-├─ IF overlap_ratio >= threshold
-│  └─ RETURN True
-│
-└─ IF query_boost AND query shares tokens
-   ├─ relaxed_threshold = threshold × 0.75
-   └─ RETURN overlap_ratio >= relaxed_threshold
-
-Otherwise: RETURN False
+RETURN score >= overlap_ratio
 ```
 
 ### SemanticJudge Algorithm
@@ -501,27 +502,27 @@ context_2_2 = JudgmentContext(
 judge.judge(context_2_2) → False  # No match
 ```
 
-### ID Mapping
+### Expected Label Mapping
 ```python
 # Retrieved doc 1 matches expected text 1
-retrieved_ids = ["relevant_doc_1", "retrieved_1:vector databases store embeddings"]
-relevant_ids = {"relevant_doc_1", "relevant_doc_2"}
+retrieved_labels = ["expected_1", "retrieved_1:vector databases store embeddings"]
+expected_labels = {"expected_1", "expected_2"}
 ```
 
 ### Metric Computation
 ```python
 # Recall@2
-recall = len({"relevant_doc_1"} ∩ retrieved_ids[:2]) / 2
+recall = len({"expected_1"} ∩ retrieved_labels[:2]) / 2
        = 1 / 2
        = 0.5
 
 # Precision@2
-precision = len({"relevant_doc_1"} ∩ retrieved_ids[:2]) / 2
+precision = len({"expected_1"} ∩ retrieved_labels[:2]) / 2
           = 1 / 2
           = 0.5
 
 # HitRate@2
-hit_rate = 1.0  # At least one relevant doc found
+hit_rate = 1.0  # At least one expected answer matched
 ```
 
 ---

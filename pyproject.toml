@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [{ name = "Evret Contributors" }]
-keywords = ["retrieval", "rag", "evaluation", "metrics", "information-retrieval"]
+keywords = ["retrieval", "information-retrieval", "evaluation", "metrics", "search"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Developers",

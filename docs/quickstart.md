@@ -56,7 +56,7 @@ Create `eval_data.json`:
 }
 ```
 
-Use `expected_answers` when you want a judge to match retrieved text against gold text. Use `relevant_doc_ids` when your dataset already has exact ground truth document ids.
+Use `expected_answers` when you want a judge to match retrieved text against gold text.
 
 ## 2. Define A Retriever
 
@@ -129,7 +129,7 @@ evaluator = Evaluator(
         RBP(k=2),
         AveragePrecision(k=2),
     ],
-    judge=TokenOverlapJudge(min_tokens=2, overlap_ratio=0.6),
+    judge=TokenOverlapJudge(min_tokens=30, overlap_ratio=0.6),
 )
 
 results = evaluator.evaluate(dataset)
@@ -180,7 +180,7 @@ The exact numbers depend on your retriever and judge. Every built-in metric retu
 ```python
 from evret.judges import LLMJudge, SemanticJudge, TokenOverlapJudge
 
-token_judge = TokenOverlapJudge(min_tokens=2, overlap_ratio=0.6)
+token_judge = TokenOverlapJudge(min_tokens=30, overlap_ratio=0.6)
 semantic_judge = SemanticJudge(threshold=0.75)
 llm_judge = LLMJudge(provider="openai", model="gpt-4o-mini")
 ```

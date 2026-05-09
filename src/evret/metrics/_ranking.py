@@ -8,10 +8,10 @@ from typing import Optional
 
 def find_first_relevant_rank(
     retrieved_doc_ids: Sequence[str],
-    relevant_doc_ids: Collection[str],
+    expected_answers: Collection[str],
     max_rank: Optional[int] = None,
 ) -> Optional[int]:
-    relevant_set = relevant_doc_ids if isinstance(relevant_doc_ids, set) else set(relevant_doc_ids)
+    relevant_set = expected_answers if isinstance(expected_answers, set) else set(expected_answers)
 
     if not relevant_set:
         return None
@@ -27,10 +27,10 @@ def find_first_relevant_rank(
 
 def compute_relevant_ranks(
     retrieved_doc_ids: Sequence[str],
-    relevant_doc_ids: Collection[str],
+    expected_answers: Collection[str],
     max_rank: Optional[int] = None,
 ) -> list[int]:
-    relevant_set = relevant_doc_ids if isinstance(relevant_doc_ids, set) else set(relevant_doc_ids)
+    relevant_set = expected_answers if isinstance(expected_answers, set) else set(expected_answers)
 
     if not relevant_set:
         return []
@@ -47,13 +47,13 @@ def compute_relevant_ranks(
 
 def compute_precision_at_rank(
     retrieved_doc_ids: Sequence[str],
-    relevant_doc_ids: Collection[str],
+    expected_answers: Collection[str],
     rank: int,
 ) -> float:
     if rank <= 0 or rank > len(retrieved_doc_ids):
         return 0.0
 
-    relevant_set = relevant_doc_ids if isinstance(relevant_doc_ids, set) else set(relevant_doc_ids)
+    relevant_set = expected_answers if isinstance(expected_answers, set) else set(expected_answers)
 
     if not relevant_set:
         return 0.0
@@ -62,5 +62,5 @@ def compute_precision_at_rank(
     return float(hits) / float(rank)
 
 
-def is_relevant(doc_id: str, relevant_doc_ids: Collection[str]) -> bool:
-    return doc_id in relevant_doc_ids
+def is_relevant(doc_id: str, expected_answers: Collection[str]) -> bool:
+    return doc_id in expected_answers
