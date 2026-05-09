@@ -1,7 +1,7 @@
 """
 Create evaluation dataset when you don't have one.
 The judge automatically determines if retrieved docs match your expected answers.
-You don't label document IDs - you just provide the answer text you expect.
+You only provide the answer text you expect.
 """
 from pathlib import Path
 import json
@@ -55,7 +55,6 @@ def save_dataset(dataset: EvaluationDataset, filename: str):
             {
                 "query_id": q.query_id,
                 "query_text": q.query_text,
-                "relevant_doc_ids": q.relevant_doc_ids,
                 "expected_answers": q.expected_answers
             }
             for q in dataset.queries

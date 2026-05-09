@@ -19,18 +19,18 @@ def load_pdf_chunks(pdf_path, chunk_size: int = 500) -> list[str]:
     return [" ".join(words[i : i + chunk_size]) for i in range(0, len(words), chunk_size)]
 
 def create_dataset(chunks: list[str]) -> EvaluationDataset:
-    """Create a simple evaluation dataset with document IDs."""
+    """Create a simple evaluation dataset with expected answer text."""
     documents = [DocumentExample(doc_id=f"doc_{i}", text=chunk) for i, chunk in enumerate(chunks)]
     queries = [
         QueryExample(
             query_id="q1",
             query_text="What is the ReAct framework?",
-            relevant_doc_ids=["doc_0", "doc_1"],
+            expected_answers=["ReAct combines reasoning traces and task-specific actions."],
         ),
         QueryExample(
             query_id="q2",
             query_text="How does reasoning help in decision making?",
-            relevant_doc_ids=["doc_2", "doc_3"],
+            expected_answers=["Reasoning helps the model create and update action plans."],
         ),
     ]
     return EvaluationDataset(documents=documents, queries=queries)

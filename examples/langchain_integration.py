@@ -13,7 +13,7 @@ from evret.metrics import HitRate, MRR
 
 def main() -> None:
     docs = PyPDFium2Loader("react_agent_paper.pdf").load()
-    splitter = RecursiveCharacterTextSplitter(chunk_size=2000,chunk_overlap=200,)
+    splitter = RecursiveCharacterTextSplitter(chunk_size=2000, chunk_overlap=200)
     chunks = splitter.split_documents(docs)
     embeddings = FastEmbedEmbeddings(model_name="BAAI/bge-small-en-v1.5")
 
@@ -33,8 +33,27 @@ def main() -> None:
             for chunk in chunks
         ],
         queries=[
-            QueryExample("q1", "What is the ReAct framework?", ["doc_0", "doc_1"]),
-            QueryExample("q2", "How does reasoning help decision making?", ["doc_2"]),
+            QueryExample(
+                query_id="q1",
+                query_text="What is the ReAct framework?",
+                expected_answers=[
+                    "ReAct combines reasoning traces with task-specific actions."
+                ],
+            ),
+            QueryExample(
+                query_id="q2",
+                query_text="How does ReAct improve performance over reasoning-only or acting-only baselines?",
+                expected_answers=[
+                    "Interleaving reasoning and action helps the model gather external information and reduces hallucinations."
+                ],
+            ),
+            QueryExample(
+                query_id="q3",
+                query_text="Why are reasoning traces useful in ReAct agents?",
+                expected_answers=[
+                    "Reasoning traces help the model induce, track, and update action plans while improving interpretability."
+                ],
+            ),
         ],
     )
 
