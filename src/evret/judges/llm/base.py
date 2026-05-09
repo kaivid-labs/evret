@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import asyncio
+from time import perf_counter
 
 from evret.judges.base import Judge, JudgmentContext
 from evret.judges.llm.factory import llm_provider_factory
 from evret.judges.llm.prompts import RELEVANCE_PROMPT_TEMPLATE
+from evret.logging import get_logger
 
+logger = get_logger(__name__)
 
 class LLMJudge(Judge):
     """LLM-powered semantic relevance judgment.
@@ -52,6 +55,15 @@ class LLMJudge(Judge):
             temperature=temperature,
             max_retries=max_retries,
         )
+        logger.info(
+            "Initialized LLMJudge",
+            extra={
+                "judge": self.name,
+                "provider": self.provider_name,
+                "model": self.model_name or self._provider.default_model,
+                "max_retries": max_retries,
+            },
+        )
 
     @property
     def name(self) -> str:
@@ -68,9 +80,20 @@ class LLMJudge(Judge):
         Returns:
             True if LLM determines texts are semantically relevant
         """
+        started_at = perf_counter()
         prompt = self._build_prompt(context)
         response = self._provider.complete(prompt)
-        return self._parse_response(response)
+        decision = self._parse_response(response)
+        logger.debug(
+            "LLM judgment computed",
+            extra={
+                "judge": self.name,
+                "provider": self.provider_name,
+                "decision": decision,
+                "elapsed_ms": round((perf_counter() - started_at) * 1000, 2),
+            },
+        )
+        return decision
 
     async def ajudge(self, context: JudgmentContext) -> bool:
         """Async judge using LLM.
@@ -81,9 +104,20 @@ class LLMJudge(Judge):
         Returns:
             Boolean relevance judgment
         """
+        started_at = perf_counter()
         prompt = self._build_prompt(context)
         response = await self._provider.acomplete(prompt)
-        return self._parse_response(response)
+        decision = self._parse_response(response)
+        logger.debug(
+            "LLM async judgment computed",
+            extra={
+                "judge": self.name,
+                "provider": self.provider_name,
+                "decision": decision,
+                "elapsed_ms": round((perf_counter() - started_at) * 1000, 2),
+            },
+        )
+        return decision
 
     def batch_judge(self, contexts: list[JudgmentContext]) -> list[bool]:
         """Batch evaluation with concurrent async API calls.
@@ -96,7 +130,22 @@ class LLMJudge(Judge):
         """
         if not contexts:
             return []
-        return asyncio.run(self._abatch_judge(contexts))
+        logger.info(
+            "Starting LLM batch judgment",
+            extra={"judge": self.name, "batch_size": len(contexts)},
+        )
+        started_at = perf_counter()
+        results = asyncio.run(self._abatch_judge(contexts))
+        logger.info(
+            "Finished LLM batch judgment",
+            extra={
+                "judge": self.name,
+                "batch_size": len(contexts),
+                "positives": sum(1 for value in results if value),
+                "elapsed_ms": round((perf_counter() - started_at) * 1000, 2),
+            },
+        )
+        return results
 
     async def _abatch_judge(self, contexts: list[JudgmentContext]) -> list[bool]:
         """Internal async batch implementation."""

@@ -2,8 +2,14 @@
 
 from __future__ import annotations
 
+import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from time import perf_counter
+
+from evret.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 @dataclass
@@ -55,7 +61,21 @@ class Judge(ABC):
         Returns:
             List of boolean judgments (same order as input)
         """
-        return [self.judge(ctx) for ctx in contexts]
+        started_at = perf_counter()
+        results = [self.judge(ctx) for ctx in contexts]
+
+        if logger.isEnabledFor(logging.DEBUG):
+            positives = sum(1 for value in results if value)
+            logger.debug(
+                "Judge batch evaluated",
+                extra={
+                    "judge": self.name,
+                    "batch_size": len(contexts),
+                    "positives": positives,
+                    "elapsed_ms": round((perf_counter() - started_at) * 1000, 2),
+                },
+            )
+        return results
 
     @property
     @abstractmethod

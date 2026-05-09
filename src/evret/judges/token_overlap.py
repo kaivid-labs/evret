@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Iterable
 
 from evret.errors import EvretValidationError
 from evret.judges.base import Judge, JudgmentContext
 from evret.judges.constants import DEFAULT_STOPWORDS, NEGATION_TOKENS
 from evret.judges.utils import tokenize, normalize_text
+from evret.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 class TokenOverlapJudge(Judge):
@@ -49,6 +53,15 @@ class TokenOverlapJudge(Judge):
         self.overlap_ratio = overlap_ratio
         self.query_boost = query_boost
         self.stopwords = DEFAULT_STOPWORDS if stopwords is None else frozenset(stopwords)
+        logger.debug(
+            "Initialized TokenOverlapJudge",
+            extra={
+                "judge": self.name,
+                "min_tokens": self.min_tokens,
+                "overlap_ratio": self.overlap_ratio,
+                "query_boost": self.query_boost,
+            },
+        )
 
     @property
     def name(self) -> str:
@@ -64,7 +77,19 @@ class TokenOverlapJudge(Judge):
         Returns:
             True if retrieved text matches expected text
         """
-        return self.score(context) >= self.overlap_ratio
+        relevance_score = self.score(context)
+        decision = relevance_score >= self.overlap_ratio
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug(
+                "Token overlap judgment computed",
+                extra={
+                    "judge": self.name,
+                    "score": relevance_score,
+                    "threshold": self.overlap_ratio,
+                    "decision": decision,
+                },
+            )
+        return decision
 
     def score(self, context: JudgmentContext) -> float:
         """Return a relevance score in the range [0, 1]."""

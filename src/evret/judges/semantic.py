@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
+import logging
+from time import perf_counter
+
 from evret.errors import EvretValidationError, OptionalDependencyError
 from evret.judges.base import Judge, JudgmentContext
+from evret.logging import get_logger
 
 try:
     from sentence_transformers import SentenceTransformer
@@ -13,6 +17,8 @@ except ImportError:
     SentenceTransformer = None
     np = None
     HAS_SENTENCE_TRANSFORMERS = False
+
+logger = get_logger(__name__)
 
 
 class SemanticJudge(Judge):
@@ -49,7 +55,17 @@ class SemanticJudge(Judge):
         self.model_name = model
         self.threshold = threshold
         self.device = device
+        model_load_start = perf_counter()
         self._model = SentenceTransformer(model, device=device)
+        logger.info(
+            "Initialized SemanticJudge model",
+            extra={
+                "judge": self.name,
+                "model": self.model_name,
+                "device": self.device,
+                "elapsed_ms": round((perf_counter() - model_load_start) * 1000, 2),
+            },
+        )
 
     @property
     def name(self) -> str:
@@ -70,7 +86,18 @@ class SemanticJudge(Judge):
             context.expected_text,
             context.retrieved_text
         )
-        return similarity >= self.threshold
+        decision = similarity >= self.threshold
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug(
+                "Semantic judgment computed",
+                extra={
+                    "judge": self.name,
+                    "similarity": similarity,
+                    "threshold": self.threshold,
+                    "decision": decision,
+                },
+            )
+        return decision
 
     def batch_judge(self, contexts: list[JudgmentContext]) -> list[bool]:
         """Optimized batch evaluation using vectorized embeddings.
@@ -84,6 +111,7 @@ class SemanticJudge(Judge):
         if not contexts:
             return []
 
+        started_at = perf_counter()
         expected_texts = [ctx.expected_text for ctx in contexts]
         retrieved_texts = [ctx.retrieved_text for ctx in contexts]
 
@@ -91,7 +119,17 @@ class SemanticJudge(Judge):
         retrieved_embs = self._model.encode(retrieved_texts, convert_to_numpy=True)
 
         similarities = self._batch_cosine_similarity(expected_embs, retrieved_embs)
-        return [float(sim) >= self.threshold for sim in similarities]
+        results = [float(sim) >= self.threshold for sim in similarities]
+        logger.debug(
+            "Semantic batch judgment computed",
+            extra={
+                "judge": self.name,
+                "batch_size": len(contexts),
+                "positives": sum(1 for value in results if value),
+                "elapsed_ms": round((perf_counter() - started_at) * 1000, 2),
+            },
+        )
+        return results
 
     def _compute_similarity(self, text1: str, text2: str) -> float:
         """Compute cosine similarity between two texts."""
