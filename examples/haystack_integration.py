@@ -3,9 +3,6 @@
 Install the example dependencies:
 pip install "evret[haystack]" qdrant-haystack fastembed-haystack pypdfium2
 """
-
-from __future__ import annotations
-
 from pathlib import Path
 
 import pypdfium2 as pdfium
@@ -46,13 +43,11 @@ class HaystackQdrantTextRetriever:
 
 def load_pdf_chunks(path: Path, chunk_size: int = 2000, chunk_overlap: int = 200) -> list[Document]:
     text = "\n".join(page.get_textpage().get_text_range() for page in pdfium.PdfDocument(path))
+    step = chunk_size - chunk_overlap
     chunks: list[Document] = []
-    start = 0
-    index = 0
 
-    while start < len(text):
-        end = min(start + chunk_size, len(text))
-        content = text[start:end].strip()
+    for index, start in enumerate(range(0, len(text), step)):
+        content = text[start:start + chunk_size].strip()
         if content:
             chunks.append(
                 Document(
@@ -61,10 +56,6 @@ def load_pdf_chunks(path: Path, chunk_size: int = 2000, chunk_overlap: int = 200
                     meta={"doc_id": f"doc_{index}", "source": path.name},
                 )
             )
-            index += 1
-        if end == len(text):
-            break
-        start = max(end - chunk_overlap, 0)
 
     return chunks
 
@@ -85,6 +76,8 @@ def index_documents(documents: list[Document]) -> QdrantDocumentStore:
 
 
 def build_dataset(documents: list[Document]) -> EvaluationDataset:
+    sample_documents = [documents[0], documents[len(documents) // 2], documents[-1]]
+
     return EvaluationDataset(
         documents=[
             DocumentExample(str(document.id), document.content or "")
@@ -92,39 +85,41 @@ def build_dataset(documents: list[Document]) -> EvaluationDataset:
         ],
         queries=[
             QueryExample(
-                query_id="q1",
-                query_text="What is the ReAct framework?",
-                expected_answers=[
-                    "ReAct combines reasoning traces with task-specific actions."
-                ],
-            ),
-            QueryExample(
-                query_id="q2",
-                query_text="How does ReAct improve performance over reasoning-only or acting-only baselines?",
-                expected_answers=[
-                    "Interleaving reasoning and action helps the model gather external information and reduces hallucinations."
-                ],
-            ),
-            QueryExample(
-                query_id="q3",
-                query_text="Why are reasoning traces useful in ReAct agents?",
-                expected_answers=[
-                    "Reasoning traces help the model induce, track, and update action plans while improving interpretability."
-                ],
-            ),
+                query_id=f"q{index}",
+                query_text=(document.content or "")[:300].replace("\n", " ").strip(),
+                expected_answers=[str(document.id)],
+            )
+            for index, document in enumerate(sample_documents, start=1)
         ],
     )
+
+
+def print_retriever_output(
+    retriever: HaystackRetrieverAdapter,
+    dataset: EvaluationDataset,
+    k: int = 5,
+) -> None:
+    for query in dataset.queries:
+        print(f"\nQuery {query.query_id}: {query.query_text[:120]}...")
+        print(f"Expected: {', '.join(query.expected_answers)}")
+        for result in retriever.retrieve(query.query_text, k=k):
+            preview = str(result.metadata.get("document", "")).replace("\n", " ")[:120]
+            print(f"- {result.doc_id} score={result.score:.4f} {preview}...")
 
 
 def main() -> None:
     documents = load_pdf_chunks(PDF_PATH)
     document_store = index_documents(documents)
     haystack_retriever = HaystackQdrantTextRetriever(document_store=document_store)
+    evret_retriever = HaystackRetrieverAdapter(haystack_retriever=haystack_retriever)
+    dataset = build_dataset(documents)
+
+    print_retriever_output(evret_retriever, dataset)
 
     results = Evaluator(
-        retriever=HaystackRetrieverAdapter(haystack_retriever=haystack_retriever),
+        retriever=evret_retriever,
         metrics=[HitRate(k=5), MRR(k=5)],
-    ).evaluate(build_dataset(documents))
+    ).evaluate(dataset)
     print(results.summary())
 
 
