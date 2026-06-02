@@ -1,6 +1,8 @@
 import importlib
 import sys
+import typing
 from types import ModuleType
+from types import new_class
 from typing import Any
 
 import pytest
@@ -21,10 +23,32 @@ class Document:
         self.score = score
 
 
+class ComponentMeta(type):
+    pass
+
+
 class Component:
     def __call__(self, cls):
-        cls.__haystack_component__ = True
-        return cls
+        namespace = {
+            name: value
+            for name, value in cls.__dict__.items()
+            if name not in {"__dict__", "__weakref__"}
+        }
+        namespace["__haystack_component__"] = True
+        component_cls = new_class(
+            cls.__name__,
+            cls.__bases__,
+            {"metaclass": ComponentMeta},
+            lambda ns: ns.update(namespace),
+        )
+        original_init = component_cls.__init__
+
+        def __init__(instance, *args, **kwargs):
+            typing.get_type_hints(component_cls.run)
+            original_init(instance, *args, **kwargs)
+
+        component_cls.__init__ = __init__
+        return component_cls
 
     @staticmethod
     def output_types(**types):

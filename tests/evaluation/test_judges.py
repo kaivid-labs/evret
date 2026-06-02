@@ -12,10 +12,14 @@ def test_default_relevance_judge_matches_by_substring() -> None:
 
 
 def test_default_relevance_judge_matches_by_token_overlap() -> None:
+    shared = (
+        "embeddings semantic search ranking retrieval vector database chunks "
+        "documents queries relevance scoring context answer generation grounding"
+    )
     assert default_relevance_judge(
         query_text="how do vector dbs work",
-        relevant_label="embeddings semantic search ranking",
-        candidate_text="semantic ranking with embeddings in vector search pipelines",
+        relevant_label=shared,
+        candidate_text=f"{shared} pipelines index nearest neighbor",
     )
 
 
