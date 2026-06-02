@@ -3,14 +3,11 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from evret.errors import OptionalDependencyError
 from evret.retrievers import BaseRetriever, RetrievalResult
 from evret.utils import require_non_empty_str, require_positive_int
-
-if TYPE_CHECKING:
-    from haystack import Document as HaystackDocument
 
 try:
     from haystack import Document, component
@@ -37,7 +34,7 @@ except ImportError:
 
 
 @component
-class HaystackRetrieverAdapter(BaseRetriever):
+class HaystackRetrieverAdapter:
     """Bridge Evret retrievers and Haystack 2.x retriever components."""
 
     def __init__(
@@ -62,7 +59,7 @@ class HaystackRetrieverAdapter(BaseRetriever):
         self.text_field = require_non_empty_str(text_field, "text_field")
 
     @component.output_types(documents=list[Document])
-    def run(self, query: str, top_k: int | None = None) -> dict[str, list["HaystackDocument"]]:
+    def run(self, query: str, top_k: int | None = None) -> dict[str, list[Document]]:
         if self.evret_retriever is None:
             raise ValueError("evret_retriever is required for Haystack retrieval")
         normalized_query = require_non_empty_str(query, "query")

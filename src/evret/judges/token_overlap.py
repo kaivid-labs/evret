@@ -31,10 +31,10 @@ class TokenOverlapJudge(Judge):
     Examples:
         >>> judge = TokenOverlapJudge()  # Default settings
         >>> judge = TokenOverlapJudge(min_tokens=50, overlap_ratio=0.7)
-        >>> judge = TokenOverlapJudge(min_tokens=30, overlap_ratio=0.6, query_boost=False)
+        >>> judge = TokenOverlapJudge(min_tokens=15, overlap_ratio=0.6, query_boost=False)
 
     Args:
-        min_tokens: Minimum shared tokens required (default: 30, suitable for RAG chunks)
+        min_tokens: Minimum shared tokens required (default: 15, suitable for RAG chunks)
         overlap_ratio: Minimum overlap ratio 0-1 (default: 0.6)
         query_boost: Allow query tokens to relax threshold (default: True)
         stopwords: Tokens ignored during overlap scoring
@@ -42,7 +42,7 @@ class TokenOverlapJudge(Judge):
 
     def __init__(
         self,
-        min_tokens: int = 30,
+        min_tokens: int = 15,
         overlap_ratio: float = 0.6,
         query_boost: bool = True,
         stopwords: Iterable[str] | None = None,

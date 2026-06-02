@@ -45,7 +45,7 @@ def token_overlap_relevance_judge(
     relevant_label: str,
     candidate_text: str,
     *,
-    min_shared_tokens: int = 2,
+    min_shared_tokens: int = 15,
     min_overlap_ratio: float = 0.6,
 ) -> bool:
     """Return True when token overlap passes configured thresholds."""
@@ -103,7 +103,7 @@ def token_overlap_relevance_judge(
 
 def make_token_overlap_judge(
     *,
-    min_shared_tokens: int = 2,
+    min_shared_tokens: int = 15,
     min_overlap_ratio: float = 0.6,
 ) -> RelevanceJudge:
     """Build a token-overlap relevance judge with custom thresholds."""

@@ -10,7 +10,11 @@ from evret.evaluation import (
     QueryExample,
 )
 from evret.errors import EvretError, EvretValidationError, OptionalDependencyError
-from evret.integrations import LangChainRetrieverAdapter, LlamaIndexRetrieverAdapter
+from evret.integrations import (
+    HaystackRetrieverAdapter,
+    LangChainRetrieverAdapter,
+    LlamaIndexRetrieverAdapter,
+)
 from evret.judges import Judge, JudgmentContext, TokenOverlapJudge
 from evret.logging import configure_logging, get_logger
 from evret.metrics import AveragePrecision, ERR, HitRate, MRR, NDCG, Precision, RBP, Recall
@@ -40,6 +44,7 @@ __all__ = [
     "Evaluator",
     "EvretError",
     "EvretValidationError",
+    "HaystackRetrieverAdapter",
     "HitRate",
     "Judge",
     "JudgmentContext",
