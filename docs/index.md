@@ -22,7 +22,7 @@ decide whether retrieved content matches them.
 - **Standard IR metrics**: Hit Rate, Recall, Precision, MRR, nDCG, ERR, RBP, and Average Precision
 - **Judge-based matching**: token overlap by default, with optional semantic and LLM judges
 - **Vector database support**: Qdrant, Chroma, Weaviate, and Milvus retrievers
-- **Framework integrations**: LangChain and LlamaIndex adapters
+- **Framework integrations**: LangChain, LlamaIndex, and Haystack adapters
 - **Simple result exports**: `summary()`, `to_json()`, and `to_csv()`
 
 ## Quick Example
@@ -35,7 +35,7 @@ dataset = EvaluationDataset.from_json("eval_data.json")
 evaluator = Evaluator(
     retriever=my_retriever,
     metrics=[HitRate(k=4), MRR(k=4), NDCG(k=4)],
-    judge=TokenOverlapJudge(min_tokens=30, overlap_ratio=0.6),
+    judge=TokenOverlapJudge(min_tokens=15, overlap_ratio=0.6),
 )
 
 results = evaluator.evaluate(dataset)
@@ -80,6 +80,7 @@ Optional extras:
 ```bash
 pip install "evret[qdrant]"
 pip install "evret[langchain]"
+pip install "evret[haystack]"
 pip install "evret[semantic]"
 pip install "evret[all]"
 ```

@@ -10,7 +10,7 @@ Use `TokenOverlapJudge` for fast local checks with no external dependency. It re
 from evret.judges import TokenOverlapJudge
 
 judge = TokenOverlapJudge(
-    min_tokens=30,
+    min_tokens=15,
     overlap_ratio=0.6,
     query_boost=True,
 )
@@ -18,14 +18,14 @@ judge = TokenOverlapJudge(
 
 | Parameter | Type | Default | Meaning |
 | --- | --- | --- | --- |
-| `min_tokens` | `int` | `30` | Minimum number of shared tokens required before a match can pass. |
+| `min_tokens` | `int` | `15` | Minimum number of shared tokens required before a match can pass. |
 | `overlap_ratio` | `float` | `0.6` | Minimum score required for a match. |
 | `query_boost` | `bool` | `True` | Adds a small score boost when matched tokens also appear in the query. |
 | `stopwords` | `Iterable[str] \| None` | `None` | Optional custom stopword list. Defaults to Evret's built-in English stopwords. |
 
 ### RAG Use Case: Configuring for Different Chunk Sizes
 
-The default `min_tokens=30` is suitable for medium-sized chunks. Adjust based on your chunk size:
+The default `min_tokens=15` is suitable for medium-sized chunks. Adjust based on your chunk size:
 
 ```python
 # For ~1000 token chunks
@@ -36,7 +36,7 @@ judge = TokenOverlapJudge(
 
 # For ~500 token chunks (default is good)
 judge = TokenOverlapJudge(
-    min_tokens=30,      # default
+    min_tokens=15,      # default
     overlap_ratio=0.6,
 )
 
@@ -122,7 +122,7 @@ from evret import EvaluationDataset, Evaluator, HitRate, Recall
 from evret.judges import TokenOverlapJudge
 
 dataset = EvaluationDataset.from_json("examples/eval_data.json")
-judge = TokenOverlapJudge(min_tokens=30, overlap_ratio=0.6)
+judge = TokenOverlapJudge(min_tokens=15, overlap_ratio=0.6)
 
 evaluator = Evaluator(
     retriever=my_retriever,
