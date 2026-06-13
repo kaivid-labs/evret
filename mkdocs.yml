@@ -60,6 +60,7 @@ nav:
       - Retriever Overview: retrievers/overview.md
       - Qdrant Retriever: retrievers/qdrant.md
       - Chroma Retriever: retrievers/chroma.md
+      - Elasticsearch Retriever: retrievers/elasticsearch.md
       - Weaviate Retriever: retrievers/weaviate.md
       - Milvus Retriever: retrievers/milvus.md
   - Integrations:

@@ -21,7 +21,7 @@ decide whether retrieved content matches them.
 
 - **Standard IR metrics**: Hit Rate, Recall, Precision, MRR, nDCG, ERR, RBP, and Average Precision
 - **Judge-based matching**: token overlap by default, with optional semantic and LLM judges
-- **Vector database support**: Qdrant, Chroma, Weaviate, and Milvus retrievers
+- **Vector database support**: Qdrant, Chroma, Elasticsearch, Weaviate, and Milvus retrievers
 - **Framework integrations**: LangChain, LlamaIndex, and Haystack adapters
 - **Simple result exports**: `summary()`, `to_json()`, and `to_csv()`
 

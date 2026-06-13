@@ -95,7 +95,7 @@ class KeywordRetriever(BaseRetriever):
         return results[:k]
 ```
 
-In a real app, this can be a `QdrantRetriever`, `ChromaRetriever`, `WeaviateRetriever`, `MilvusRetriever`, or your own retriever.
+In a real app, this can be a `QdrantRetriever`, `ChromaRetriever`, `ElasticsearchRetriever`, `WeaviateRetriever`, `MilvusRetriever`, or your own retriever.
 
 ## 3. Run Evaluation
 

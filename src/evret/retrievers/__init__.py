@@ -2,6 +2,7 @@
 
 from evret.retrievers.base import BaseRetriever, RetrievalResult
 from evret.retrievers.chroma import ChromaRetriever
+from evret.retrievers.elasticsearch import ElasticsearchRetriever
 from evret.retrievers.milvus import MilvusRetriever
 from evret.retrievers.qdrant import QdrantRetriever
 from evret.retrievers.weaviate import WeaviateRetriever
@@ -11,6 +12,7 @@ __all__ = [
     "RetrievalResult",
     "QdrantRetriever",
     "ChromaRetriever",
+    "ElasticsearchRetriever",
     "WeaviateRetriever",
     "MilvusRetriever",
 ]

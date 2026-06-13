@@ -21,6 +21,7 @@ Every retriever follows `BaseRetriever`:
 | --- | --- | --- | --- |
 | `QdrantRetriever` | Qdrant | `qdrant-client` | [Qdrant Usage](qdrant.md) |
 | `ChromaRetriever` | ChromaDB | `chromadb` | [Chroma Usage](chroma.md) |
+| `ElasticsearchRetriever` | Elasticsearch | `elasticsearch` | [Elasticsearch Usage](elasticsearch.md) |
 | `WeaviateRetriever` | Weaviate | `weaviate-client` | [Weaviate Usage](weaviate.md) |
 | `MilvusRetriever` | Milvus | `pymilvus` | [Milvus Usage](milvus.md) |
 
