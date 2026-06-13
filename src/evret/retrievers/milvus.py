@@ -3,11 +3,15 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+from time import perf_counter
 from typing import Any, Callable
 
 from evret.errors import EvretValidationError, OptionalDependencyError
+from evret.logging import get_logger
 from evret.retrievers.base import BaseRetriever, RetrievalResult
 from evret.utils import require_non_empty_str
+
+logger = get_logger(__name__)
 
 
 class MilvusRetriever(BaseRetriever):
@@ -45,6 +49,7 @@ class MilvusRetriever(BaseRetriever):
         self.client = client or self._create_client(uri=uri, token=token, client_kwargs=client_kwargs)
 
     def retrieve(self, query: str, k: int) -> list[RetrievalResult]:
+        started_at = perf_counter()
         self._validate_k(k)
         normalized_query = self._validate_query(query)
         query_vector = list(self.query_encoder(normalized_query))
@@ -69,7 +74,23 @@ class MilvusRetriever(BaseRetriever):
 
         raw_response = self.client.search(**search_kwargs)
         hits = self._extract_hits(raw_response)
-        return [self._to_result(hit) for hit in hits]
+        results = [self._to_result(hit) for hit in hits]
+        logger.debug(
+            "Milvus retrieval completed",
+            extra={
+                "retriever": type(self).__name__,
+                "collection": self.collection_name,
+                "k": k,
+                "vector_dimensions": len(query_vector),
+                "has_filter": self.search_filter is not None,
+                "has_output_fields": self.output_fields is not None,
+                "has_search_params": self.search_params is not None,
+                "has_partition_names": self.partition_names is not None,
+                "results": len(results),
+                "elapsed_ms": round((perf_counter() - started_at) * 1000, 2),
+            },
+        )
+        return results
 
     def _create_client(
         self, uri: str, token: str | None, client_kwargs: dict[str, Any] | None

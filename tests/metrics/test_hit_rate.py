@@ -1,3 +1,5 @@
+import logging
+
 import pytest
 
 from evret.metrics import HitRate
@@ -11,6 +13,25 @@ class TestHitRateBasicScoring:
             expected_answers={"doc2"},
         )
         assert score == 1.0
+
+    def test_score_logs_batch_summary(self, caplog) -> None:
+        metric = HitRate(k=3)
+
+        with caplog.at_level(logging.INFO, logger="evret.metrics.base"):
+            score = metric.score(
+                retrieved_by_query=[["doc1", "doc2"], []],
+                expected_by_query=[{"doc2"}, {"doc3"}],
+            )
+
+        assert score == 0.5
+        record = next(
+            record for record in caplog.records if record.message == "Finished metric computation"
+        )
+        assert record.metric == "hit_rate@3"
+        assert record.queries == 2
+        assert record.empty_retrieved_queries == 1
+        assert record.empty_expected_queries == 0
+        assert record.avg_retrieved_count == 1.0
 
     def test_miss_when_no_relevant_found(self) -> None:
         metric = HitRate(k=3)

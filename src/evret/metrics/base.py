@@ -62,17 +62,28 @@ class Metric(ABC):
             "Computing metric over query batch",
             extra={"metric": self.name, "queries": num_queries, "k": self.k},
         )
-        for retrieved, relevant in zip(retrieved_by_query, expected_by_query, strict=True):
+        empty_retrieved_queries = 0
+        empty_expected_queries = 0
+        retrieved_count_total = 0
+        for query_index, (retrieved, relevant) in enumerate(
+            zip(retrieved_by_query, expected_by_query, strict=True)
+        ):
             query_score = self.score_query(
                 retrieved_doc_ids=retrieved,
                 expected_answers=relevant,
             )
             total_score += query_score
+            retrieved_count_total += len(retrieved)
+            if not retrieved:
+                empty_retrieved_queries += 1
+            if not relevant:
+                empty_expected_queries += 1
             if is_debug:
                 logger.debug(
                     "Computed per-query metric score",
                     extra={
                         "metric": self.name,
+                        "query_index": query_index,
                         "retrieved_count": len(retrieved),
                         "expected_count": len(relevant),
                         "query_score": query_score,
@@ -80,12 +91,16 @@ class Metric(ABC):
                 )
 
         final_score = total_score / num_queries
+        avg_retrieved_count = retrieved_count_total / num_queries
         logger.info(
             "Finished metric computation",
             extra={
                 "metric": self.name,
                 "queries": num_queries,
                 "score": final_score,
+                "avg_retrieved_count": round(avg_retrieved_count, 2),
+                "empty_retrieved_queries": empty_retrieved_queries,
+                "empty_expected_queries": empty_expected_queries,
                 "elapsed_ms": round((perf_counter() - started_at) * 1000, 2),
             },
         )

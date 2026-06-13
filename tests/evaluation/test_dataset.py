@@ -1,4 +1,5 @@
 import json
+import logging
 
 import pytest
 
@@ -38,6 +39,30 @@ def test_dataset_from_json_loads_queries_and_documents(tmp_path) -> None:
     assert dataset.documents[0].doc_id == "doc_1"
 
 
+def test_dataset_from_json_logs_loaded_counts(tmp_path, caplog) -> None:
+    dataset_path = tmp_path / "dataset.json"
+    dataset_path.write_text(
+        json.dumps(
+            {
+                "queries": [{"query_id": "q1", "query_text": "alpha"}],
+                "documents": [{"doc_id": "doc_1", "text": "alpha"}],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    with caplog.at_level(logging.INFO, logger="evret.evaluation.dataset"):
+        EvaluationDataset.from_json(dataset_path)
+
+    record = next(
+        record for record in caplog.records if record.message == "Loaded evaluation dataset"
+    )
+    assert record.path == str(dataset_path)
+    assert record.format == "json"
+    assert record.queries == 1
+    assert record.documents == 1
+
+
 def test_dataset_from_csv_supports_json_and_csv_answer_columns(tmp_path) -> None:
     dataset_path = tmp_path / "dataset.csv"
     dataset_path.write_text(
@@ -56,6 +81,30 @@ def test_dataset_from_csv_supports_json_and_csv_answer_columns(tmp_path) -> None
     assert [query.query_id for query in dataset.queries] == ["q1", "q2"]
     assert dataset.queries[0].expected_answers == ["alpha text", "beta snippet"]
     assert dataset.queries[1].expected_answers == ["gamma context", "delta context"]
+
+
+def test_dataset_from_csv_logs_loaded_counts(tmp_path, caplog) -> None:
+    dataset_path = tmp_path / "dataset.csv"
+    dataset_path.write_text(
+        "\n".join(
+            [
+                "query_id,query_text,expected_answers",
+                "q1,alpha,answer one",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    with caplog.at_level(logging.INFO, logger="evret.evaluation.dataset"):
+        EvaluationDataset.from_csv(dataset_path)
+
+    record = next(
+        record for record in caplog.records if record.message == "Loaded evaluation dataset"
+    )
+    assert record.path == str(dataset_path)
+    assert record.format == "csv"
+    assert record.queries == 1
+    assert record.documents == 0
 
 
 def test_dataset_from_json_raises_for_invalid_query_type(tmp_path) -> None:

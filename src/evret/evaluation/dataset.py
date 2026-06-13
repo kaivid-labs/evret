@@ -6,14 +6,18 @@ import csv
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
+from time import perf_counter
 from typing import Any
 
 from evret.errors import EvretValidationError
+from evret.logging import get_logger
 from evret.utils import (
     normalize_unique_non_empty_strings,
     require_file_exists,
     require_non_empty_str,
 )
+
+logger = get_logger(__name__)
 
 
 @dataclass(frozen=True, slots=True)
@@ -47,6 +51,7 @@ class EvaluationDataset:
 
     @classmethod
     def from_json(cls, path: str | Path) -> EvaluationDataset:
+        started_at = perf_counter()
         dataset_path = require_file_exists(path, "dataset")
         raw_data = json.loads(dataset_path.read_text(encoding="utf-8"))
         if not isinstance(raw_data, dict):
@@ -61,10 +66,21 @@ class EvaluationDataset:
 
         queries = [cls._parse_query_item(item) for item in raw_queries]
         documents = [cls._parse_document_item(item) for item in raw_documents]
+        logger.info(
+            "Loaded evaluation dataset",
+            extra={
+                "path": str(dataset_path),
+                "format": "json",
+                "queries": len(queries),
+                "documents": len(documents),
+                "elapsed_ms": round((perf_counter() - started_at) * 1000, 2),
+            },
+        )
         return cls(queries=queries, documents=documents)
 
     @classmethod
     def from_csv(cls, path: str | Path) -> EvaluationDataset:
+        started_at = perf_counter()
         dataset_path = require_file_exists(path, "dataset")
         query_items: list[QueryExample] = []
         with dataset_path.open("r", encoding="utf-8", newline="") as handle:
@@ -93,6 +109,16 @@ class EvaluationDataset:
                     )
                 )
 
+        logger.info(
+            "Loaded evaluation dataset",
+            extra={
+                "path": str(dataset_path),
+                "format": "csv",
+                "queries": len(query_items),
+                "documents": 0,
+                "elapsed_ms": round((perf_counter() - started_at) * 1000, 2),
+            },
+        )
         return cls(queries=query_items, documents=[])
 
     @staticmethod
@@ -140,6 +166,10 @@ class EvaluationDataset:
             loaded = json.loads(value)
         except json.JSONDecodeError:
             loaded = [part.strip() for part in value.split(",") if part.strip()]
+            logger.debug(
+                "Parsed expected answers from comma-separated CSV field",
+                extra={"answers": len(loaded)},
+            )
 
         if isinstance(loaded, list):
             return normalize_unique_non_empty_strings(loaded)

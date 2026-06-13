@@ -3,12 +3,16 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+from time import perf_counter
 from typing import Any, Callable
 from urllib.parse import urlparse
 
 from evret.errors import EvretValidationError, OptionalDependencyError
+from evret.logging import get_logger
 from evret.retrievers.base import BaseRetriever, RetrievalResult
 from evret.utils import require_non_empty_str
+
+logger = get_logger(__name__)
 
 
 class WeaviateRetriever(BaseRetriever):
@@ -50,6 +54,7 @@ class WeaviateRetriever(BaseRetriever):
         )
 
     def retrieve(self, query: str, k: int) -> list[RetrievalResult]:
+        started_at = perf_counter()
         self._validate_k(k)
         normalized_query = self._validate_query(query)
         query_vector = list(self.query_encoder(normalized_query))
@@ -70,7 +75,22 @@ class WeaviateRetriever(BaseRetriever):
 
         response = self.collection.query.near_vector(**query_kwargs)
         objects = getattr(response, "objects", response)
-        return [self._to_result(obj) for obj in list(objects)]
+        results = [self._to_result(obj) for obj in list(objects)]
+        logger.debug(
+            "Weaviate retrieval completed",
+            extra={
+                "retriever": type(self).__name__,
+                "collection": self.collection_name,
+                "k": k,
+                "vector_dimensions": len(query_vector),
+                "has_filter": self.query_filter is not None,
+                "has_return_properties": self.return_properties is not None,
+                "has_return_metadata": self.return_metadata is not None,
+                "results": len(results),
+                "elapsed_ms": round((perf_counter() - started_at) * 1000, 2),
+            },
+        )
+        return results
 
     def _resolve_collection(
         self,

@@ -3,11 +3,15 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from time import perf_counter
 from typing import Any, Callable
 
 from evret.errors import EvretValidationError, OptionalDependencyError
+from evret.logging import get_logger
 from evret.retrievers.base import BaseRetriever, RetrievalResult
 from evret.utils import require_non_empty_str
+
+logger = get_logger(__name__)
 
 
 class ChromaRetriever(BaseRetriever):
@@ -34,6 +38,7 @@ class ChromaRetriever(BaseRetriever):
         )
 
     def retrieve(self, query: str, k: int) -> list[RetrievalResult]:
+        started_at = perf_counter()
         self._validate_k(k)
         normalized_query = self._validate_query(query)
         query_kwargs: dict[str, Any] = {
@@ -66,6 +71,18 @@ class ChromaRetriever(BaseRetriever):
             score = self.distance_to_score(float(distance_raw)) if distance_raw is not None else 0.0
             results.append(RetrievalResult(doc_id=str(doc_id), score=score, metadata=metadata))
 
+        logger.debug(
+            "Chroma retrieval completed",
+            extra={
+                "retriever": type(self).__name__,
+                "collection": self.collection_name,
+                "k": k,
+                "uses_query_encoder": self.query_encoder is not None,
+                "vector_dimensions": len(query_vector) if self.query_encoder is not None else None,
+                "results": len(results),
+                "elapsed_ms": round((perf_counter() - started_at) * 1000, 2),
+            },
+        )
         return results
 
     def _resolve_collection(

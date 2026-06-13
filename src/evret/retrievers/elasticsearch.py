@@ -3,11 +3,15 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+from time import perf_counter
 from typing import Any, Callable
 
 from evret.errors import EvretValidationError, OptionalDependencyError
+from evret.logging import get_logger
 from evret.retrievers.base import BaseRetriever, RetrievalResult
 from evret.utils import require_non_empty_str
+
+logger = get_logger(__name__)
 
 
 class ElasticsearchRetriever(BaseRetriever):
@@ -38,6 +42,7 @@ class ElasticsearchRetriever(BaseRetriever):
         self.client = client or self._create_client(client_kwargs=client_kwargs)
 
     def retrieve(self, query: str, k: int) -> list[RetrievalResult]:
+        started_at = perf_counter()
         self._validate_k(k)
         normalized_query = self._validate_query(query)
         query_vector = list(self.query_encoder(normalized_query))
@@ -64,7 +69,22 @@ class ElasticsearchRetriever(BaseRetriever):
 
         response = self.client.search(**search_kwargs)
         hits = self._hits(response)
-        return [self._to_result(hit) for hit in hits]
+        results = [self._to_result(hit) for hit in hits]
+        logger.debug(
+            "Elasticsearch retrieval completed",
+            extra={
+                "retriever": type(self).__name__,
+                "index": self.index_name,
+                "k": k,
+                "num_candidates": knn["num_candidates"],
+                "vector_dimensions": len(query_vector),
+                "has_filter": self.filter is not None,
+                "has_fields": self.fields is not None,
+                "results": len(results),
+                "elapsed_ms": round((perf_counter() - started_at) * 1000, 2),
+            },
+        )
+        return results
 
     def _create_client(self, client_kwargs: dict[str, Any] | None) -> Any:
         try:

@@ -3,11 +3,15 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from time import perf_counter
 from typing import Any, Callable
 
 from evret.errors import EvretValidationError, OptionalDependencyError
+from evret.logging import get_logger
 from evret.retrievers.base import BaseRetriever, RetrievalResult
 from evret.utils import require_non_empty_str
+
+logger = get_logger(__name__)
 
 
 class QdrantRetriever(BaseRetriever):
@@ -36,6 +40,7 @@ class QdrantRetriever(BaseRetriever):
         self.client = client or self._create_client(url=url, client_kwargs=client_kwargs)
 
     def retrieve(self, query: str, k: int) -> list[RetrievalResult]:
+        started_at = perf_counter()
         self._validate_k(k)
         normalized_query = self._validate_query(query)
         query_vector = list(self.query_encoder(normalized_query))
@@ -43,7 +48,21 @@ class QdrantRetriever(BaseRetriever):
             raise EvretValidationError("query_encoder must return a non-empty vector")
 
         raw_points = self._query_points(query_vector=query_vector, k=k)
-        return [self._to_result(point) for point in raw_points]
+        results = [self._to_result(point) for point in raw_points]
+        logger.debug(
+            "Qdrant retrieval completed",
+            extra={
+                "retriever": type(self).__name__,
+                "collection": self.collection_name,
+                "k": k,
+                "vector_dimensions": len(query_vector),
+                "has_filter": self.query_filter is not None,
+                "has_search_params": self.search_params is not None,
+                "results": len(results),
+                "elapsed_ms": round((perf_counter() - started_at) * 1000, 2),
+            },
+        )
+        return results
 
     def _create_client(self, url: str, client_kwargs: dict[str, Any] | None) -> Any:
         try:
