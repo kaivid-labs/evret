@@ -24,6 +24,7 @@ classifiers = [
 ]
 dependencies = [
     "qdrant-client>=1.17.1",
+    "tqdm>=4.67.0",
 ]
 
 [project.optional-dependencies]
