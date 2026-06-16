@@ -65,7 +65,6 @@ class OpenAIProvider(LLMProvider):
             model=self.model,
             messages=[{"role": "user", "content": prompt}],
             temperature=self.temperature,
-            max_tokens=10,  # "YES" or "NO" response
         )
         return response.choices[0].message.content.strip()
 
@@ -75,6 +74,5 @@ class OpenAIProvider(LLMProvider):
             model=self.model,
             messages=[{"role": "user", "content": prompt}],
             temperature=self.temperature,
-            max_tokens=10,
         )
         return response.choices[0].message.content.strip()
