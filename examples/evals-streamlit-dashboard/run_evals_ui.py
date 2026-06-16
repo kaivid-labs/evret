@@ -1,5 +1,5 @@
 """
-pip install streamlit pandas
+pip install streamlit pandas openai
 streamlit run run_evals_ui.py
 """
 import os

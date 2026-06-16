@@ -1,3 +1,7 @@
+"""
+pip install openai
+"""
+
 import json
 from pathlib import Path
 from evret import DatasetGenerator, SourceDocument
