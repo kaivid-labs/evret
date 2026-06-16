@@ -56,6 +56,7 @@ nav:
   - Evaluation:
       - Evaluation Overview: evaluation/overview.md
       - Dataset Format: evaluation/dataset-format.md
+      - Dataset Generation: evaluation/dataset-generation.md
   - Retrievers:
       - Retriever Overview: retrievers/overview.md
       - Qdrant Retriever: retrievers/qdrant.md
@@ -70,5 +71,6 @@ nav:
       - Metrics API: api/metrics.md
       - Judges API: api/judges.md
       - Evaluation API: api/evaluation.md
+      - Generation API: api/generation.md
       - Retrievers API: api/retrievers.md
       - Integrations API: api/integrations.md

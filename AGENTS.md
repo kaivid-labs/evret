@@ -19,6 +19,8 @@ This document describes the agent skills available in the Evret project. These s
             ├── PRECISION_SKILL.md            # Precision@K metric guidance
             ├── MRR_SKILL.md                  # MRR metric guidance
             ├── NDCG_SKILL.md                 # nDCG metric guidance
+            ├── ERR_SKILL.md                  # ERR metric guidance
+            ├── RBP_SKILL.md                  # RBP metric guidance
             └── AVERAGE_PRECISION_SKILL.md    # Average Precision/MAP guidance
 ```
 
@@ -52,6 +54,8 @@ This document describes the agent skills available in the Evret project. These s
 | Measure completeness of results | Recall | Coverage metric |
 | Know how early first correct result appears | MRR | Single-answer QA optimization |
 | Care about ranking quality | nDCG | Multi-relevance ranking quality |
+| Model user satisfaction with graded relevance | ERR | Cascade browsing behavior |
+| Model result quality with user patience | RBP | Tunable position weighting |
 
 ---
 
@@ -212,7 +216,60 @@ nDCG@k = DCG@k / IDCG@k
 
 ---
 
-### 7. Average Precision (MAP) Skill (`average-precision-metric`)
+### 7. ERR (Expected Reciprocal Rank) Skill (`err-metric`)
+
+**Location**: [.agents/skills/retriever-evals/metrics/ERR_SKILL.md](.agents/skills/retriever-evals/metrics/ERR_SKILL.md)
+
+**Trigger Keywords**:
+- ERR, Expected Reciprocal Rank
+- Cascade model
+- User satisfaction
+- Graded relevance
+
+**Purpose**: Models how likely a user is to be satisfied while scanning ranked results from top to bottom.
+
+**Formula**:
+```
+ERR@k = Σ(i=1 to k) [(1/i) × R(i) × Π(j=1 to i-1)(1 - R(j))]
+R(i) = (2^grade(i) - 1) / 2^max_grade
+```
+
+**When to Use**:
+- ✅ Graded relevance judgments are available
+- ✅ User satisfaction and stopping behavior matter
+- ✅ Earlier highly relevant results should dominate the score
+- ❌ Binary-only first-hit checks (use MRR or Hit Rate)
+- ❌ Coverage-critical retrieval (use Recall)
+
+---
+
+### 8. RBP (Rank-Biased Precision) Skill (`rbp-metric`)
+
+**Location**: [.agents/skills/retriever-evals/metrics/RBP_SKILL.md](.agents/skills/retriever-evals/metrics/RBP_SKILL.md)
+
+**Trigger Keywords**:
+- RBP, Rank-Biased Precision
+- Persistence parameter
+- User patience
+- Position-weighted precision
+
+**Purpose**: Measures ranked result quality using a tunable persistence parameter that controls how deep users are expected to look.
+
+**Formula**:
+```
+RBP(p)@k = (1 - p) × Σ(i=1 to k) [p^(i-1) × rel(i)]
+```
+
+**When to Use**:
+- ✅ User patience differs by product or search mode
+- ✅ You need tunable position weighting
+- ✅ Comparing incomplete or different-length rankings
+- ❌ You need all relevant documents recovered (use Recall)
+- ❌ You need cascade satisfaction behavior (use ERR)
+
+---
+
+### 9. Average Precision (MAP) Skill (`average-precision-metric`)
 
 **Location**: [.agents/skills/retriever-evals/metrics/AVERAGE_PRECISION_SKILL.md](.agents/skills/retriever-evals/metrics/AVERAGE_PRECISION_SKILL.md)
 
@@ -260,8 +317,14 @@ Start: What are you trying to optimize?
 ├─ How well are results ranked? (binary relevance)
 │  └─ Use: Average Precision (MAP)
 │
-└─ How well are results ranked? (graded relevance)
-   └─ Use: nDCG
+├─ How well are results ranked? (graded relevance)
+│  └─ Use: nDCG
+│
+├─ How satisfied is a user while scanning results?
+│  └─ Use: ERR
+│
+└─ How does ranking quality change with user patience?
+   └─ Use: RBP
 ```
 
 ---
@@ -279,7 +342,7 @@ These skills guide the implementation and usage of the metrics in the Evret fram
 ```python
 from evret.retrievers import QdrantRetriever
 from evret.evaluation import Evaluator, Dataset
-from evret.metrics import HitRate, MRR, NDCG
+from evret.metrics import ERR, HitRate, MRR, NDCG, RBP
 
 # Setup retriever
 retriever = QdrantRetriever(
@@ -296,7 +359,9 @@ evaluator = Evaluator(
     metrics=[
         HitRate(k=5),    # Binary presence check
         MRR(k=10),       # First-hit optimization
-        NDCG(k=5)        # Ranking quality
+        NDCG(k=5),       # Ranking quality
+        ERR(k=5),        # User satisfaction
+        RBP(k=5),        # User patience weighting
     ]
 )
 
@@ -315,6 +380,8 @@ print(results.summary())
 | Precision | Binary/Graded | No | No | Context quality, noise reduction |
 | MRR | Binary | Yes | Yes | Fast hits, single-answer QA |
 | nDCG | Graded | Yes | No | Ranking quality, search systems |
+| ERR | Graded | Yes | No | User satisfaction, cascade behavior |
+| RBP | Binary/Graded | Yes | No | User patience, position-weighted quality |
 | Average Precision | Binary | Yes | No | Benchmark comparison, multi-relevant |
 
 ---

@@ -57,7 +57,7 @@ dataset = EvaluationDataset.from_json("eval_data.json")
 evaluator = Evaluator(
     retriever=my_retriever,
     metrics=[HitRate(k=4), MRR(k=4), NDCG(k=4)],
-    judge=TokenOverlapJudge(min_tokens=2, overlap_ratio=0.6),
+    judge=TokenOverlapJudge(min_tokens=15, overlap_ratio=0.6),
 )
 
 results = evaluator.evaluate(dataset)
@@ -142,7 +142,7 @@ dataset = EvaluationDataset.from_json("eval_data.json")
 dataset = EvaluationDataset.from_csv("eval_data.csv")
 ```
 
-For detailed dataset format documentation, classic IR evaluation with document IDs, and more examples, see the [Dataset Format Guide](https://github.com/kaivid-labs/evret/blob/main/docs/evaluation/dataset-format.md)
+For detailed dataset format documentation and more examples, see the [Dataset Format Guide](https://github.com/kaivid-labs/evret/blob/main/docs/evaluation/dataset-format.md)
 
 ---
 
@@ -157,7 +157,7 @@ from evret.judges import TokenOverlapJudge
 evaluator = Evaluator(
     retriever=my_retriever,
     metrics=[HitRate(k=4), Recall(k=4)],
-    judge=TokenOverlapJudge(min_tokens=2, overlap_ratio=0.6),
+    judge=TokenOverlapJudge(min_tokens=15, overlap_ratio=0.6),
 )
 ```
 
