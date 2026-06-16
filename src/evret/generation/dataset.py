@@ -5,7 +5,11 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass, field
+from pathlib import PurePath, PureWindowsPath
 from typing import Any, Protocol, Sequence
+from uuid import NAMESPACE_URL, uuid5
+
+from tqdm.auto import tqdm
 
 from evret.errors import EvretValidationError
 from evret.evaluation import DocumentExample, EvaluationDataset, QueryExample
@@ -85,7 +89,7 @@ class GeneratedExample:
     category: str
     expected_answer: str
     expected_context: str
-    source_chunk_id: str
+    expected_doc_ids: list[str] = field(default_factory=list)
 
     def to_query_example(self) -> QueryExample:
         """Convert to Evret's evaluation query shape."""
@@ -93,6 +97,7 @@ class GeneratedExample:
         return QueryExample(
             query_id=self.query_id,
             query_text=self.query_text,
+            expected_doc_ids=list(self.expected_doc_ids),
             expected_answers=expected_answers,
         )
 
@@ -104,7 +109,7 @@ class GeneratedExample:
             "category": self.category,
             "expected_answer": self.expected_answer,
             "expected_context": self.expected_context,
-            "source_chunk_id": self.source_chunk_id,
+            "expected_doc_ids": list(self.expected_doc_ids),
         }
 
 
@@ -134,7 +139,7 @@ class GeneratedDataset:
                     ),
                     "category": example.category,
                     "expected_context": example.expected_context,
-                    "source_chunk_id": example.source_chunk_id,
+                    "expected_doc_ids": list(example.expected_doc_ids),
                 }
                 for example in self.examples
             ],
@@ -158,12 +163,14 @@ class DatasetGenerator:
         *,
         chunking_config: ChunkingConfig | None = None,
         examples_per_chunk: int = 6,
+        show_progress: bool = True,
     ) -> None:
         self.llm = llm
         self.chunking_config = chunking_config or ChunkingConfig()
         if examples_per_chunk <= 0:
             raise EvretValidationError("examples_per_chunk must be positive")
         self.examples_per_chunk = examples_per_chunk
+        self.show_progress = show_progress
 
     @classmethod
     def from_provider(
@@ -176,6 +183,7 @@ class DatasetGenerator:
         max_retries: int = 3,
         chunking_config: ChunkingConfig | None = None,
         examples_per_chunk: int = 6,
+        show_progress: bool = True,
     ) -> DatasetGenerator:
         """Create a generator using Evret's configured LLM providers."""
         from evret.judges.llm.factory import llm_provider_factory
@@ -191,6 +199,7 @@ class DatasetGenerator:
             llm,
             chunking_config=chunking_config,
             examples_per_chunk=examples_per_chunk,
+            show_progress=show_progress,
         )
 
     def generate(self, documents: Sequence[SourceDocument | str]) -> GeneratedDataset:
@@ -199,7 +208,14 @@ class DatasetGenerator:
         examples: list[GeneratedExample] = []
         seen_queries: set[str] = set()
 
-        for chunk in chunks:
+        chunk_iterator = tqdm(
+            chunks,
+            desc="Generating dataset",
+            unit="chunk",
+            disable=not self.show_progress,
+        )
+
+        for chunk in chunk_iterator:
             prompt = build_generation_prompt(chunk, num_examples=self.examples_per_chunk)
             raw_examples = _parse_llm_json_array(self.llm.complete(prompt))
             for raw_example in raw_examples:
@@ -226,10 +242,14 @@ def chunk_documents(
 ) -> list[GeneratedChunk]:
     """Split documents into structure-aware chunks."""
     chunking_config = config or ChunkingConfig()
+    source_documents = [
+        _coerce_source_document(document, document_index=document_index)
+        for document_index, document in enumerate(documents, start=1)
+    ]
+
     chunks: list[GeneratedChunk] = []
 
-    for document_index, document in enumerate(documents, start=1):
-        source_document = _coerce_source_document(document, document_index=document_index)
+    for document_index, source_document in enumerate(source_documents, start=1):
         sections = _split_markdown_sections(source_document.text)
         chunk_index = 1
         for section in sections:
@@ -238,7 +258,12 @@ def chunk_documents(
                 text = section_chunk.strip()
                 if not text:
                     continue
-                doc_id = _make_chunk_id(source_document.source, document_index, chunk_index)
+                doc_id = _make_chunk_id(
+                    source_document.source,
+                    document_index,
+                    chunk_index,
+                    text,
+                )
                 metadata = dict(source_document.metadata)
                 metadata.update(
                     {
@@ -279,7 +304,7 @@ Context:
 Generate {num_examples} evaluation examples.
 
 Requirements:
-- Each example must include category, query_text, expected_answer, expected_context, and source_chunk_id.
+- Each example must include category, query_text, and expected_answer.
 - Use these categories when possible:
   - direct_fact
   - paraphrase
@@ -290,11 +315,9 @@ Requirements:
 - For every category except out_of_context:
   - The query must be answerable from the context.
   - The expected_answer must be directly supported by the context.
-  - The expected_context must be the exact supporting text or the smallest supporting snippet from the context.
 - For out_of_context:
   - The query must be plausible for the same domain, but not answered by the context.
   - The expected_answer must be an empty string.
-  - The expected_context must be an empty string.
 - Do not use outside knowledge to answer any query.
 - Avoid duplicate questions.
 - Avoid yes/no questions unless the context contains a clear condition or rule.
@@ -305,16 +328,12 @@ Return JSON only:
   {{
     "category": "direct_fact",
     "query_text": "...",
-    "expected_answer": "...",
-    "expected_context": "...",
-    "source_chunk_id": "{chunk.doc_id}"
+    "expected_answer": "..."
   }},
   {{
     "category": "out_of_context",
     "query_text": "...",
-    "expected_answer": "",
-    "expected_context": "",
-    "source_chunk_id": "{chunk.doc_id}"
+    "expected_answer": ""
   }}
 ]"""
 
@@ -499,16 +518,17 @@ def _normalize_generated_example(
         return None
 
     expected_answer = str(raw_example.get("expected_answer") or "").strip()
-    expected_context = str(raw_example.get("expected_context") or "").strip()
 
     if category == OUT_OF_CONTEXT_CATEGORY:
-        if expected_answer or expected_context:
+        if expected_answer:
             return None
+        expected_context = ""
     else:
-        if not expected_answer or not expected_context:
+        if not expected_answer:
             return None
-        if not _contains_normalized(chunk.text, expected_context):
+        if not _contains_normalized(chunk.text, expected_answer):
             return None
+        expected_context = chunk.text
 
     return GeneratedExample(
         query_id=f"q{query_index}",
@@ -516,9 +536,8 @@ def _normalize_generated_example(
         category=category,
         expected_answer=expected_answer,
         expected_context=expected_context,
-        source_chunk_id=chunk.doc_id,
+        expected_doc_ids=[] if category == OUT_OF_CONTEXT_CATEGORY else [chunk.doc_id],
     )
-
 
 def _contains_normalized(haystack: str, needle: str) -> bool:
     return _normalize_space(needle).lower() in _normalize_space(haystack).lower()
@@ -536,8 +555,22 @@ def _token_count(text: str) -> int:
     return len(text.split())
 
 
-def _make_chunk_id(source: str, document_index: int, chunk_index: int) -> str:
-    source_slug = re.sub(r"[^a-z0-9]+", "_", source.lower()).strip("_")
-    if not source_slug:
-        source_slug = f"document_{document_index}"
-    return f"{source_slug}_{chunk_index}"
+def _source_name(source: str) -> str:
+    source_name = source.strip()
+    if "/" in source_name or "\\" in source_name:
+        source_name = (
+            PureWindowsPath(source_name).name
+            if "\\" in source_name and "/" not in source_name
+            else PurePath(source_name).name
+        )
+    return source_name
+
+def _make_chunk_id(
+    source: str,
+    document_index: int,
+    chunk_index: int,
+    text: str,
+) -> str:
+    source_name = _source_name(source) or f"document_{document_index}"
+    identity = f"{source_name}\n{document_index}\n{chunk_index}\n{_normalize_space(text)}"
+    return str(uuid5(NAMESPACE_URL, identity))
