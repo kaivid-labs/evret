@@ -46,6 +46,8 @@ Export methods:
 - Evaluator validates that metric names are unique
 - Evaluator validates dataset has at least one query
 - Evaluator asks retriever using `max(k)` across selected metrics
-- Use `expected_answers` for evaluation text snippets the judge matches against retrieved content
+- Use `expected_doc_ids` when gold relevant document IDs are known
+- Use `expected_answers` when a judge should match retrieved text against gold text snippets
+- For LLM-generated datasets, prefer direct `expected_doc_ids` matching; if using generated `expected_answers` for text matching, use `LLMJudge` rather than `TokenOverlapJudge`
 - For top-4 context evaluation, set metrics with `k=4`
 - Pass `judge=` to customize relevance matching logic (defaults to TokenOverlapJudge)

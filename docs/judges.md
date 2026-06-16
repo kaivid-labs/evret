@@ -6,6 +6,8 @@ Judges decide whether retrieved text matches the expected text for a query. The 
 
 Use `TokenOverlapJudge` for fast local checks with no external dependency. It removes common stopwords, scores weighted token overlap, adds small phrase and query-match bonuses, and rejects negation mismatches.
 
+Do not use `TokenOverlapJudge` as the text judge for LLM-generated evaluation datasets. Generated expected answers may be paraphrased or summarized from the source chunk, so use `LLMJudge` for text-based judgment. If the generated dataset keeps `expected_doc_ids`, the evaluator scores those document IDs directly and does not need a judge for metric matching.
+
 ```python
 from evret.judges import TokenOverlapJudge
 
@@ -79,12 +81,14 @@ pip install evret[semantic]
 
 Use `LLMJudge` when the expected and retrieved text need semantic judgment from an LLM.
 
+Use `LLMJudge` for text-based evaluation of LLM-generated datasets. It is a better fit than token overlap when expected answers were generated from chunks and may not share exact wording with retrieved content.
+
 ```python
 from evret.judges import LLMJudge
 
 judge = LLMJudge(
     provider="openai",
-    model="gpt-4o-mini",
+    model="gpt-5.4-nano",
     api_key=None,
     temperature=0.0,
     max_retries=3,
@@ -111,9 +115,9 @@ Provider defaults:
 
 | Provider | Default Model | Environment Variable |
 | --- | --- | --- |
-| `openai` | `gpt-4o-mini` | `OPENAI_API_KEY` |
-| `anthropic` | `claude-3-5-haiku-20241022` | `ANTHROPIC_API_KEY` |
-| `google` | `gemini-2.5-flash` | `GEMINI_API_KEY` or `GOOGLE_API_KEY` |
+| `openai` | `gpt-5.4-nano` | `OPENAI_API_KEY` |
+| `anthropic` | `claude-haiku-4-5-20251001` | `ANTHROPIC_API_KEY` |
+| `google` | `gemini-3-flash-preview` | `GEMINI_API_KEY` or `GOOGLE_API_KEY` |
 
 ## Use A Judge With Evaluator
 

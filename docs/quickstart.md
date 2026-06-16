@@ -27,6 +27,7 @@ Create `eval_data.json`:
     {
       "query_id": "q1",
       "query_text": "does a flight above 500 dollars need manager approval",
+      "expected_doc_ids": ["travel_policy_2"],
       "expected_answers": [
         "Flights above 500 dollars require manager approval before booking business travel."
       ]
@@ -34,6 +35,7 @@ Create `eval_data.json`:
     {
       "query_id": "q2",
       "query_text": "what hotel reimbursement limit applies to business travel",
+      "expected_doc_ids": ["travel_policy_3"],
       "expected_answers": [
         "Hotel reimbursement is capped at 180 dollars per night unless finance approves an exception."
       ]
@@ -56,7 +58,7 @@ Create `eval_data.json`:
 }
 ```
 
-Use `expected_answers` when you want a judge to match retrieved text against gold text.
+Use `expected_doc_ids` when you know the relevant document IDs. Use `expected_answers` when you want a judge to match retrieved text against gold text.
 
 ## 2. Define A Retriever
 

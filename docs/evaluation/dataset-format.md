@@ -13,9 +13,12 @@ Top level object has:
 
 - `query_id` or `id`: string (required)
 - `query_text` or `query`: string (required)
+- `expected_doc_ids` or `relevant_doc_ids`: list of strings (optional)
+  - Use when you know the relevant document or chunk IDs
+  - Metrics compare retrieved `doc_id`s directly against these IDs
 - `expected_answers`: list of strings (optional)
   - Use gold supporting text snippets or expected facts
-  - Judges match these strings against retrieved content
+  - Judges match these strings against retrieved content when `expected_doc_ids` is not provided
 
 ### Document Item Fields
 
@@ -31,6 +34,7 @@ Top level object has:
     {
       "query_id": "q1",
       "query_text": "does a flight above 500 dollars need manager approval",
+      "expected_doc_ids": ["travel_policy_2"],
       "expected_answers": [
         "Flights above 500 dollars require manager approval before booking business travel."
       ]
@@ -38,6 +42,7 @@ Top level object has:
     {
       "query_id": "q2",
       "query_text": "what hotel reimbursement limit applies to business travel",
+      "expected_doc_ids": ["travel_policy_3"],
       "expected_answers": [
         "Hotel reimbursement is capped at 180 dollars per night unless finance approves an exception."
       ]
@@ -73,6 +78,7 @@ Required columns:
 Optional columns:
 
 - `query_id` or `id`
+- `expected_doc_ids`
 - `expected_answers`
 
 The `expected_answers` field can be:
@@ -80,12 +86,14 @@ The `expected_answers` field can be:
 - JSON list string like `"[\"Flights above 500 dollars require manager approval before booking business travel.\"]"`
 - Comma separated values when the answers are short and unambiguous
 
+The `expected_doc_ids` field uses the same JSON-list or comma-separated format.
+
 ### CSV Example
 
 ```csv
-query_id,query_text,expected_answers
-q1,does a flight above 500 dollars need manager approval,"[""Flights above 500 dollars require manager approval before booking business travel.""]"
-q2,what hotel reimbursement limit applies to business travel,"[""Hotel reimbursement is capped at 180 dollars per night unless finance approves an exception.""]"
+query_id,query_text,expected_doc_ids,expected_answers
+q1,does a flight above 500 dollars need manager approval,"[""travel_policy_2""]","[""Flights above 500 dollars require manager approval before booking business travel.""]"
+q2,what hotel reimbursement limit applies to business travel,"[""travel_policy_3""]","[""Hotel reimbursement is capped at 180 dollars per night unless finance approves an exception.""]"
 ```
 
 ## Loader Methods

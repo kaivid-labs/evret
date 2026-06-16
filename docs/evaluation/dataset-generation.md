@@ -3,8 +3,9 @@
 Evret can generate evaluation datasets from source documents with a simple LLM-assisted flow:
 
 1. Split source documents into retrieval-sized chunks.
-2. Ask a user-selected LLM to generate diverse examples from each chunk.
-3. Convert the generated rows into `EvaluationDataset`.
+2. Ask a user-selected LLM to generate query text and expected answers from each chunk.
+3. Attach chunk-derived `expected_context` and `expected_doc_ids` in Evret code.
+4. Convert the generated rows into `EvaluationDataset`.
 
 ## Basic Usage
 
@@ -13,8 +14,8 @@ from evret import DatasetGenerator, SourceDocument
 
 generator = DatasetGenerator.from_provider(
     provider="openai",
-    model="gpt-4o-mini",
-    examples_per_chunk=6,
+    model="gpt-5.4-nano",
+    examples_per_chunk=5,
 )
 
 generated = generator.generate(
@@ -27,6 +28,27 @@ generated = generator.generate(
 )
 
 dataset = generated.to_evaluation_dataset()
+```
+
+## Evaluating Generated Datasets
+
+Generated datasets include `expected_doc_ids`, so `Evaluator` can score retrieved document IDs directly without calling a judge.
+
+If your evaluation workflow uses the generated `expected_answers` for text-based matching, use `LLMJudge` instead of `TokenOverlapJudge`. Generated answers can be paraphrased or compressed from the source chunk, and token overlap is too brittle for that judgment.
+
+```python
+from evret import Evaluator, HitRate, Recall
+from evret.judges import LLMJudge
+
+judge = LLMJudge(provider="openai", model="gpt-5.4-nano")
+
+evaluator = Evaluator(
+    retriever=my_retriever,
+    metrics=[HitRate(k=5), Recall(k=5)],
+    judge=judge,
+)
+
+results = evaluator.evaluate(dataset)
 ```
 
 ## Generated Categories
@@ -42,18 +64,7 @@ The generator uses one prompt per chunk and asks for diverse categories:
 | `broad_summary` | Broader question answerable from the chunk as a whole. |
 | `out_of_context` | Plausible domain question not answered by the chunk. |
 
-For `out_of_context`, the generator requires an empty expected answer and empty expected context. When converted to `EvaluationDataset`, those rows have `expected_answers=[]`.
-
-## Chunking Defaults
-
-`chunk_documents()` uses structure-aware chunking:
-
-- normal prose target: 250-450 tokens
-- maximum chunk size: 700 tokens
-- overlap: 40-80 tokens
-- minimum useful chunk size: 80 tokens
-
-Markdown headings are preserved as `heading_path` metadata, and every chunk receives a stable `doc_id`.
+The LLM is not asked to generate `expected_context` or document IDs. For answerable rows, Evret stores the source chunk text as `expected_context` and the chunk UUID as `expected_doc_ids`. For `out_of_context`, the generator requires an empty expected answer; those rows have `expected_answers=[]`, `expected_doc_ids=[]`, and `expected_context=""`.
 
 ## Rich Output
 
@@ -65,8 +76,8 @@ Markdown headings are preserved as `heading_path` metadata, and every chunk rece
     "query_text": "When does a flight require manager approval?",
     "expected_answers": ["Flights above 500 dollars require manager approval."],
     "category": "specific_detail",
-    "expected_context": "Flights above 500 dollars require manager approval.",
-    "source_chunk_id": "travel_policy_md_1",
+    "expected_context": "Flights above 500 dollars require manager approval before booking.",
+    "expected_doc_ids": ["0182f1e8-2f9a-5f7b-a23d-65ad3f7c7f7b"],
 }
 ```
 
