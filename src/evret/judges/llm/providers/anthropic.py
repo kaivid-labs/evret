@@ -29,7 +29,7 @@ class AnthropicProvider(LLMProvider):
         """Initialize Anthropic provider.
 
         Args:
-            model: Model name (default: claude-3-5-haiku-20241022)
+            model: Model name (default: claude-haiku-4-5-20251001)
             api_key: Anthropic API key (reads from ANTHROPIC_API_KEY env if None)
             temperature: Sampling temperature
             max_retries: Max retry attempts for failed requests
@@ -57,7 +57,7 @@ class AnthropicProvider(LLMProvider):
     @property
     def default_model(self) -> str:
         """Default Anthropic model."""
-        return "claude-3-5-haiku-20241022"
+        return "claude-haiku-4-5-20251001"
 
     def complete(self, prompt: str) -> str:
         """Synchronous completion via Anthropic API."""
