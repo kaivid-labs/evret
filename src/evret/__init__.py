@@ -10,6 +10,16 @@ from evret.evaluation import (
     QueryExample,
 )
 from evret.errors import EvretError, EvretValidationError, OptionalDependencyError
+from evret.generation import (
+    ChunkingConfig,
+    DatasetGenerator,
+    GeneratedChunk,
+    GeneratedDataset,
+    GeneratedExample,
+    SourceDocument,
+    build_generation_prompt,
+    chunk_documents,
+)
 from evret.integrations import (
     HaystackRetrieverAdapter,
     LangChainRetrieverAdapter,
@@ -38,6 +48,8 @@ __all__ = [
     "AveragePrecision",
     "BaseRetriever",
     "ChromaRetriever",
+    "ChunkingConfig",
+    "DatasetGenerator",
     "DocumentExample",
     "ERR",
     "EvaluationDataset",
@@ -46,6 +58,9 @@ __all__ = [
     "ElasticsearchRetriever",
     "EvretError",
     "EvretValidationError",
+    "GeneratedChunk",
+    "GeneratedDataset",
+    "GeneratedExample",
     "HaystackRetrieverAdapter",
     "HitRate",
     "Judge",
@@ -64,6 +79,9 @@ __all__ = [
     "RBP",
     "Recall",
     "RetrievalResult",
+    "SourceDocument",
     "TokenOverlapJudge",
     "WeaviateRetriever",
+    "build_generation_prompt",
+    "chunk_documents",
 ]
