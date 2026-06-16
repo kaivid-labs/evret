@@ -238,9 +238,11 @@ def chunk_documents(
                 text = section_chunk.strip()
                 if not text:
                     continue
+                doc_id = _make_chunk_id(source_document.source, document_index, chunk_index)
                 metadata = dict(source_document.metadata)
                 metadata.update(
                     {
+                        "doc_id": doc_id,
                         "source": source_document.source,
                         "heading_path": section["heading_path"],
                         "chunk_index": chunk_index,
@@ -248,7 +250,7 @@ def chunk_documents(
                 )
                 chunks.append(
                     GeneratedChunk(
-                        doc_id=_make_chunk_id(source_document.source, document_index, chunk_index),
+                        doc_id=doc_id,
                         text=text,
                         metadata=metadata,
                     )
@@ -448,6 +450,7 @@ def _merge_short_chunks(chunks: list[GeneratedChunk], config: ChunkingConfig) ->
         if (
             merged
             and _token_count(chunk.text) < config.min_tokens
+            and merged[-1].metadata.get("doc_id") == chunk.metadata.get("doc_id")
             and merged[-1].metadata.get("source") == chunk.metadata.get("source")
             and merged[-1].metadata.get("heading_path") == chunk.metadata.get("heading_path")
             and _token_count(merged[-1].text) + _token_count(chunk.text) <= config.max_tokens
@@ -537,5 +540,5 @@ def _token_count(text: str) -> int:
 def _make_chunk_id(source: str, document_index: int, chunk_index: int) -> str:
     source_slug = re.sub(r"[^a-zA-Z0-9]+", "_", source).strip("_").lower()
     if not source_slug:
-        source_slug = f"document_{document_index}"
-    return f"{source_slug}_{chunk_index}"
+        source_slug = "document"
+    return f"{source_slug}_{document_index}_{chunk_index}"
