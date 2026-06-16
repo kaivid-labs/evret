@@ -24,12 +24,14 @@ logger = get_logger(__name__)
 class QueryExample:
     """One query item in an evaluation dataset.
 
+    Provide expected_doc_ids when gold relevant document IDs are known.
     Provide expected_answers as gold answer text snippets for the judge to match
-    against retrieved content.
+    against retrieved content when document IDs are not available.
     """
 
     query_id: str
     query_text: str
+    expected_doc_ids: list[str] = field(default_factory=list)
     expected_answers: list[str] = field(default_factory=list)
 
 
@@ -100,11 +102,13 @@ class EvaluationDataset:
                 query_id = require_non_empty_str(query_id, "query_id")
 
                 expected_answers = cls._parse_answer_list(row.get("expected_answers", ""))
+                expected_doc_ids = cls._parse_answer_list(row.get("expected_doc_ids", ""))
 
                 query_items.append(
                     QueryExample(
                         query_id=query_id,
                         query_text=query_text,
+                        expected_doc_ids=expected_doc_ids,
                         expected_answers=expected_answers,
                     )
                 )
@@ -137,9 +141,15 @@ class EvaluationDataset:
             raise EvretValidationError("expected_answers must be a list")
         expected_answers = normalize_unique_non_empty_strings(expected_answers_raw)
 
+        expected_doc_ids_raw = item.get("expected_doc_ids") or item.get("relevant_doc_ids") or []
+        if not isinstance(expected_doc_ids_raw, list):
+            raise EvretValidationError("expected_doc_ids must be a list")
+        expected_doc_ids = normalize_unique_non_empty_strings(expected_doc_ids_raw)
+
         return QueryExample(
             query_id=query_id,
             query_text=query_text,
+            expected_doc_ids=expected_doc_ids,
             expected_answers=expected_answers,
         )
 

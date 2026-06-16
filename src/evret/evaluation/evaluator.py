@@ -106,6 +106,19 @@ class Evaluator:
         expected_by_query: list[set[str]] = []
 
         for query, query_results in zip(dataset.queries, retrieved_results):
+            expected_doc_ids = [
+                self._normalize_label(doc_id)
+                for doc_id in query.expected_doc_ids
+                if str(doc_id).strip()
+            ]
+            unique_expected_doc_ids = list(dict.fromkeys(expected_doc_ids))
+            if unique_expected_doc_ids:
+                retrieved_by_query.append(
+                    [self._normalize_label(result.doc_id) for result in query_results]
+                )
+                expected_by_query.append(set(unique_expected_doc_ids))
+                continue
+
             normalized_query_text = self._normalize_label(query.query_text)
             expected_labels = [
                 self._normalize_label(label)
