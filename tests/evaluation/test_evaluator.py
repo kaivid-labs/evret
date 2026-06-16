@@ -154,6 +154,24 @@ def test_evaluator_scores_top_4_contexts_against_gold_chunks() -> None:
     assert results.summary() == {"hit_rate@4": 1.0, "recall@4": 1.0}
 
 
+def test_evaluator_scores_expected_doc_ids_directly() -> None:
+    dataset = build_dataset()
+    dataset.queries = [
+        QueryExample(
+            query_id="q1",
+            query_text="manager approval flight",
+            expected_doc_ids=["travel_policy_2"],
+            expected_answers=["this text intentionally does not match"],
+        )
+    ]
+    retriever = CorpusRetriever(dataset.documents)
+    evaluator = Evaluator(retriever=retriever, metrics=[HitRate(k=1)])
+
+    results = evaluator.evaluate(dataset)
+
+    assert results.summary() == {"hit_rate@1": 1.0}
+
+
 def test_evaluator_uses_custom_relevance_judge() -> None:
     from evret.judges.base import Judge, JudgmentContext
 

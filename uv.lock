@@ -838,6 +838,7 @@ version = "0.0.2"
 source = { editable = "." }
 dependencies = [
     { name = "qdrant-client" },
+    { name = "tqdm" },
 ]
 
 [package.optional-dependencies]
@@ -966,6 +967,7 @@ requires-dist = [
     { name = "sentence-transformers", marker = "extra == 'judges'", specifier = ">=2.2.0" },
     { name = "sentence-transformers", marker = "extra == 'semantic'", specifier = ">=2.2.0" },
     { name = "testcontainers", marker = "extra == 'integration'", specifier = ">=4.8.0" },
+    { name = "tqdm", specifier = ">=4.67.0" },
     { name = "weaviate-client", marker = "extra == 'all'", specifier = ">=4.16.0" },
     { name = "weaviate-client", marker = "extra == 'integration'", specifier = ">=4.16.0" },
     { name = "weaviate-client", marker = "extra == 'weaviate'", specifier = ">=4.16.0" },

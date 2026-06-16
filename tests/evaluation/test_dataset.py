@@ -15,6 +15,7 @@ def test_dataset_from_json_loads_queries_and_documents(tmp_path) -> None:
                     {
                         "query_id": "q1",
                         "query_text": "alpha",
+                        "expected_doc_ids": ["doc_1"],
                         "expected_answers": ["alpha text", "beta snippet"],
                     }
                 ],
@@ -34,6 +35,7 @@ def test_dataset_from_json_loads_queries_and_documents(tmp_path) -> None:
 
     assert len(dataset.queries) == 1
     assert dataset.queries[0].query_id == "q1"
+    assert dataset.queries[0].expected_doc_ids == ["doc_1"]
     assert dataset.queries[0].expected_answers == ["alpha text", "beta snippet"]
     assert len(dataset.documents) == 1
     assert dataset.documents[0].doc_id == "doc_1"
@@ -81,6 +83,45 @@ def test_dataset_from_csv_supports_json_and_csv_answer_columns(tmp_path) -> None
     assert [query.query_id for query in dataset.queries] == ["q1", "q2"]
     assert dataset.queries[0].expected_answers == ["alpha text", "beta snippet"]
     assert dataset.queries[1].expected_answers == ["gamma context", "delta context"]
+
+
+def test_dataset_from_csv_supports_expected_doc_ids(tmp_path) -> None:
+    dataset_path = tmp_path / "dataset.csv"
+    dataset_path.write_text(
+        "\n".join(
+            [
+                "query_id,query_text,expected_doc_ids",
+                'q1,alpha,"[""doc_1"",""doc_2""]"',
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    dataset = EvaluationDataset.from_csv(dataset_path)
+
+    assert dataset.queries[0].expected_doc_ids == ["doc_1", "doc_2"]
+
+
+def test_dataset_from_json_accepts_legacy_relevant_doc_ids(tmp_path) -> None:
+    dataset_path = tmp_path / "dataset.json"
+    dataset_path.write_text(
+        json.dumps(
+            {
+                "queries": [
+                    {
+                        "query_id": "q1",
+                        "query_text": "alpha",
+                        "relevant_doc_ids": ["doc_1"],
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    dataset = EvaluationDataset.from_json(dataset_path)
+
+    assert dataset.queries[0].expected_doc_ids == ["doc_1"]
 
 
 def test_dataset_from_csv_logs_loaded_counts(tmp_path, caplog) -> None:
