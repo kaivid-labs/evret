@@ -30,7 +30,7 @@ class GoogleGenAIProvider(LLMProvider):
         """Initialize Google Gen AI provider.
 
         Args:
-            model: Model name (default: gemini-2.5-flash)
+            model: Model name (default: gemini-3-flash-preview)
             api_key: Google Gen AI API key (reads from GEMINI_API_KEY or GOOGLE_API_KEY)
             temperature: Sampling temperature
             max_retries: Max retry attempts for failed requests
@@ -59,7 +59,7 @@ class GoogleGenAIProvider(LLMProvider):
     @property
     def default_model(self) -> str:
         """Default Google Gen AI model."""
-        return "gemini-2.5-flash"
+        return "gemini-3-flash-preview"
 
     def complete(self, prompt: str) -> str:
         """Synchronous completion via Google Gen AI API."""

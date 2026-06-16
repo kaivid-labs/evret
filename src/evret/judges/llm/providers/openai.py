@@ -29,7 +29,7 @@ class OpenAIProvider(LLMProvider):
         """Initialize OpenAI provider.
 
         Args:
-            model: Model name (default: gpt-4o-mini)
+            model: Model name (default: gpt-5.4-nano)
             api_key: OpenAI API key (reads from OPENAI_API_KEY env if None)
             temperature: Sampling temperature
             max_retries: Max retry attempts for failed requests
@@ -57,7 +57,7 @@ class OpenAIProvider(LLMProvider):
     @property
     def default_model(self) -> str:
         """Default OpenAI model."""
-        return "gpt-4o-mini"
+        return "gpt-5.4-nano"
 
     def complete(self, prompt: str) -> str:
         """Synchronous completion via OpenAI API."""
