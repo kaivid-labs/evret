@@ -44,11 +44,16 @@ semantic = ["sentence-transformers>=2.2.0"]
 llm-openai = ["openai>=1.0.0"]
 llm-anthropic = ["anthropic>=0.18.0"]
 llm-google = ["google-genai>=1.0.0"]
+trulens-openai = ["trulens-core>=1.0.0", "trulens-providers-openai>=1.0.0"]
+trulens-litellm = ["trulens-core>=1.0.0", "trulens-providers-litellm>=1.0.0"]
 judges = [
   "sentence-transformers>=2.2.0",
   "openai>=1.0.0",
   "anthropic>=0.18.0",
   "google-genai>=1.0.0",
+  "trulens-core>=1.0.0",
+  "trulens-providers-openai>=1.0.0",
+  "trulens-providers-litellm>=1.0.0",
 ]
 docs = [
   "mkdocs>=1.5.0",
@@ -69,6 +74,9 @@ all = [
   "openai>=1.0.0",
   "anthropic>=0.18.0",
   "google-genai>=1.0.0",
+  "trulens-core>=1.0.0",
+  "trulens-providers-openai>=1.0.0",
+  "trulens-providers-litellm>=1.0.0",
 ]
 integration = [
   "pytest>=8.0.0",
