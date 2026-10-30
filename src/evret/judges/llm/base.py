@@ -22,7 +22,7 @@ class LLMJudge(Judge):
         >>> judge = LLMJudge(provider="openai")  # Uses OPENAI_API_KEY env
         >>> judge = LLMJudge(provider="openai", api_key="sk-...")
         >>> judge = LLMJudge(provider="anthropic", model="claude-3-5-sonnet-20241022")
-        >>> judge = LLMJudge(provider="google", model="gemini-2.5-flash")
+        >>> judge = LLMJudge(provider="google", model="gemini-3.5-flash-lite")
 
     Args:
         provider: LLM provider ("openai", "anthropic", or "google")

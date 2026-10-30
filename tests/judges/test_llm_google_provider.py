@@ -57,8 +57,8 @@ def test_google_provider_uses_default_model_and_api_key(monkeypatch) -> None:
 
     provider = llm_provider_factory("google")
 
-    assert provider.default_model == "gemini-2.5-flash"
-    assert provider.model == "gemini-2.5-flash"
+    assert provider.default_model == "gemini-3.5-flash-lite"
+    assert provider.model == "gemini-3.5-flash-lite"
     assert provider._client.api_key == "test-key"
 
 
@@ -67,8 +67,8 @@ def test_google_provider_supports_aliases(monkeypatch) -> None:
     monkeypatch.setattr(google, "genai", FakeGenAI)
     monkeypatch.setattr(google, "types", FakeTypes)
 
-    assert llm_provider_factory("google-genai", api_key="key").model == "gemini-2.5-flash"
-    assert llm_provider_factory("gemini", api_key="key").model == "gemini-2.5-flash"
+    assert llm_provider_factory("google-genai", api_key="key").model == "gemini-3.5-flash-lite"
+    assert llm_provider_factory("gemini", api_key="key").model == "gemini-3.5-flash-lite"
 
 
 def test_google_provider_requires_api_key(monkeypatch) -> None:
@@ -90,7 +90,7 @@ def test_google_provider_complete(monkeypatch) -> None:
     provider = llm_provider_factory("google", api_key="key", temperature=0.2)
 
     assert provider.complete("Judge this") == "YES"
-    assert provider._client.models.kwargs["model"] == "gemini-2.5-flash"
+    assert provider._client.models.kwargs["model"] == "gemini-3.5-flash-lite"
     assert provider._client.models.kwargs["contents"] == "Judge this"
     assert provider._client.models.kwargs["config"].kwargs == {
         "temperature": 0.2,

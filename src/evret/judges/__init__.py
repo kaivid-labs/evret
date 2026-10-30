@@ -18,4 +18,7 @@ def __getattr__(name: str):
     elif name == "LLMJudge":
         from evret.judges.llm import LLMJudge
         return LLMJudge
+    elif name == "TruLensJudge":
+        from evret.judges.trulens import TruLensJudge
+        return TruLensJudge
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

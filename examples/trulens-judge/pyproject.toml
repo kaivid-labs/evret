@@ -1,0 +1,16 @@
+[project]
+name = "evret-trulens-judge-example"
+version = "0.1.0"
+description = "Evaluate a Qdrant retriever with evret using TruLens as the relevance judge"
+requires-python = ">=3.10"
+dependencies = [
+  "evret[trulens-openai]",
+  "qdrant-client>=1.9.0",
+  "fastembed>=0.3.0",
+  "pypdfium2>=4.0.0",
+  "python-dotenv>=1.0.0",
+]
+
+# Resolve `evret` from the repo root so the example runs against local source.
+[tool.uv.sources]
+evret = { path = "../..", editable = true }
