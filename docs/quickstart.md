@@ -184,7 +184,7 @@ from evret.judges import LLMJudge, SemanticJudge, TokenOverlapJudge
 
 token_judge = TokenOverlapJudge(min_tokens=15, overlap_ratio=0.6)
 semantic_judge = SemanticJudge(threshold=0.75)
-llm_judge = LLMJudge(provider="openai", model="gpt-6-lina")
+llm_judge = LLMJudge(provider="openai", model="gpt-6-luna")
 ```
 
 | Judge | Best For |

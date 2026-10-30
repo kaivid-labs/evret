@@ -47,7 +47,7 @@ class TruLensJudge(Judge):
 
     Examples:
         >>> judge = TruLensJudge()  # OpenAI provider, context_relevance
-        >>> judge = TruLensJudge(provider="openai", model="gpt-6-lina")
+        >>> judge = TruLensJudge(provider="openai", model="gpt-6-luna")
         >>> judge = TruLensJudge(provider="litellm", model="claude-3-5-sonnet-latest")
         >>> judge = TruLensJudge(metric="relevance", threshold=0.6)
 

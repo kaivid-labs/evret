@@ -131,7 +131,7 @@ from evret.judges import TruLensJudge
 # OpenAI provider
 judge = TruLensJudge(
     provider="openai",
-    model="gpt-6-lina",
+    model="gpt-6-luna",
     metric="context_relevance",
     threshold=0.5,
 )

@@ -47,9 +47,9 @@ def test_defaults_use_openai_and_context_relevance(patched_openai):
 
 
 def test_model_is_forwarded_as_model_engine(patched_openai):
-    judge = trulens.TruLensJudge(model="gpt-6-lina")
+    judge = trulens.TruLensJudge(model="gpt-6-luna")
 
-    assert judge._provider.kwargs["model_engine"] == "gpt-6-lina"
+    assert judge._provider.kwargs["model_engine"] == "gpt-6-luna"
 
 
 def test_score_returns_raw_float_and_uses_query_and_retrieved(patched_openai):
