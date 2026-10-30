@@ -119,6 +119,44 @@ Provider defaults:
 | `anthropic` | `claude-haiku-4-5-20251001` | `ANTHROPIC_API_KEY` |
 | `google` | `gemini-3-flash-preview` | `GEMINI_API_KEY` or `GOOGLE_API_KEY` |
 
+## TruLensJudge
+
+Use `TruLensJudge` to score relevance with [TruLens](https://github.com/truera/trulens) LLM-as-a-judge feedback functions. It calls a TruLens provider's feedback function (default: `context_relevance`), which returns a graded `0.0-1.0` score, then thresholds that score into a relevance decision for the metrics. Call `score()` directly when you want the raw graded score instead of a boolean.
+
+Unlike the other judges, TruLens feedback functions score the `query` against the `retrieved_text` directly and ignore `expected_text`. Only feedback functions that take two strings and return a score map onto evret's judgment context, so groundedness and answer-relevance against a generated response are not exposed.
+
+```python
+from evret.judges import TruLensJudge
+
+# OpenAI provider
+judge = TruLensJudge(
+    provider="openai",
+    model="gpt-6-luna",
+    metric="context_relevance",
+    threshold=0.5,
+)
+
+# LiteLLM provider routes to Anthropic, Gemini, Cohere, Mistral, Ollama, and more
+judge = TruLensJudge(provider="litellm", model="claude-3-5-sonnet-latest")
+```
+
+Install the provider dependency first:
+
+```bash
+pip install evret[trulens-openai]
+pip install evret[trulens-litellm]
+```
+
+| Parameter | Type | Default | Meaning |
+| --- | --- | --- | --- |
+| `provider` | `str` | `openai` | TruLens provider. Supported values are `openai` and `litellm`. |
+| `model` | `str \| None` | `None` | Model engine name. Uses the provider default when omitted; required in practice for `litellm`. |
+| `metric` | `str` | `context_relevance` | Feedback function to use. Supported values are `context_relevance` and `relevance`. |
+| `threshold` | `float` | `0.5` | Score cutoff in `[0, 1]`. Scores `>= threshold` judge as relevant. |
+| `provider_kwargs` | `dict \| None` | `None` | Extra keyword arguments forwarded to the TruLens provider constructor, such as `api_base` for a local LiteLLM model. |
+
+See [`examples/trulens_judge.py`](https://github.com/kaivid-labs/evret/blob/main/examples/trulens_judge.py) for an end-to-end run.
+
 ## Use A Judge With Evaluator
 
 ```python

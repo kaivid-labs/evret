@@ -7,3 +7,5 @@
 ::: evret.judges.semantic
 
 ::: evret.judges.llm.base
+
+::: evret.judges.trulens
