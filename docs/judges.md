@@ -155,7 +155,7 @@ pip install evret[trulens-litellm]
 | `threshold` | `float` | `0.5` | Score cutoff in `[0, 1]`. Scores `>= threshold` judge as relevant. |
 | `provider_kwargs` | `dict \| None` | `None` | Extra keyword arguments forwarded to the TruLens provider constructor, such as `api_base` for a local LiteLLM model. |
 
-See [`examples/trulens_judge.py`](https://github.com/kaivid-labs/evret/blob/main/examples/trulens_judge.py) for an end-to-end run.
+See [`examples/trulens-judge/`](https://github.com/kaivid-labs/evret/tree/main/examples/trulens-judge) for an end-to-end run: generate a dataset from a PDF, index it into Qdrant, and evaluate with `TruLensJudge`.
 
 ## Use A Judge With Evaluator
 
