@@ -47,9 +47,9 @@ def test_defaults_use_openai_and_context_relevance(patched_openai):
 
 
 def test_model_is_forwarded_as_model_engine(patched_openai):
-    judge = trulens.TruLensJudge(model="gpt-6-luna")
+    judge = trulens.TruLensJudge(model="gpt-6-lina")
 
-    assert judge._provider.kwargs["model_engine"] == "gpt-6-luna"
+    assert judge._provider.kwargs["model_engine"] == "gpt-6-lina"
 
 
 def test_score_returns_raw_float_and_uses_query_and_retrieved(patched_openai):
@@ -104,9 +104,9 @@ def test_litellm_provider_builds(monkeypatch):
     monkeypatch.setattr(trulens, "HAS_TRULENS_LITELLM", True)
     monkeypatch.setattr(trulens, "_TruLensLiteLLM", FakeTruLensProvider)
 
-    judge = trulens.TruLensJudge(provider="litellm", model="gemini/gemini-2.5-flash")
+    judge = trulens.TruLensJudge(provider="litellm", model="gemini/gemini-3.5-flash-lite")
 
-    assert judge._provider.kwargs["model_engine"] == "gemini/gemini-2.5-flash"
+    assert judge._provider.kwargs["model_engine"] == "gemini/gemini-3.5-flash-lite"
 
 
 def test_exported_via_judges_namespace():

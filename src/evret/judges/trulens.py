@@ -47,14 +47,14 @@ class TruLensJudge(Judge):
 
     Examples:
         >>> judge = TruLensJudge()  # OpenAI provider, context_relevance
-        >>> judge = TruLensJudge(provider="openai", model="gpt-6-luna")
+        >>> judge = TruLensJudge(provider="openai", model="gpt-6-lina")
         >>> judge = TruLensJudge(provider="litellm", model="claude-3-5-sonnet-latest")
         >>> judge = TruLensJudge(metric="relevance", threshold=0.6)
 
     Args:
         provider: TruLens provider ("openai" or "litellm"). LiteLLM routes to
             Anthropic, Gemini, Cohere, Mistral, Ollama, and more via its model
-            string (e.g. "claude-3-5-sonnet-latest", "gemini/gemini-2.5-flash").
+            string (e.g. "claude-3-5-sonnet-latest", "gemini/gemini-3.5-flash-lite").
         model: Model engine name (uses the provider default if None). Required
             in practice for the litellm provider.
         metric: Feedback function to use (one of ``SUPPORTED_METRICS``,

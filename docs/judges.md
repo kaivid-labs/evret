@@ -117,7 +117,7 @@ Provider defaults:
 | --- | --- | --- |
 | `openai` | `gpt-5.4-nano` | `OPENAI_API_KEY` |
 | `anthropic` | `claude-haiku-4-5-20251001` | `ANTHROPIC_API_KEY` |
-| `google` | `gemini-3-flash-preview` | `GEMINI_API_KEY` or `GOOGLE_API_KEY` |
+| `google` | `gemini-3.5-flash-lite` | `GEMINI_API_KEY` or `GOOGLE_API_KEY` |
 
 ## TruLensJudge
 
@@ -131,7 +131,7 @@ from evret.judges import TruLensJudge
 # OpenAI provider
 judge = TruLensJudge(
     provider="openai",
-    model="gpt-6-luna",
+    model="gpt-6-lina",
     metric="context_relevance",
     threshold=0.5,
 )
