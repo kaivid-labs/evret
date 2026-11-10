@@ -1,0 +1,7 @@
+data/
+qdrant_local/
+generated_eval_dataset.json
+benchmark_results.json
+.env
+.venv/
+__pycache__/
