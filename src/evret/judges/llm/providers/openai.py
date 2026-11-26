@@ -64,7 +64,6 @@ class OpenAIProvider(LLMProvider):
         response = self._client.chat.completions.create(
             model=self.model,
             messages=[{"role": "user", "content": prompt}],
-            temperature=self.temperature,
         )
         return response.choices[0].message.content.strip()
 
@@ -73,6 +72,5 @@ class OpenAIProvider(LLMProvider):
         response = await self._async_client.chat.completions.create(
             model=self.model,
             messages=[{"role": "user", "content": prompt}],
-            temperature=self.temperature,
         )
         return response.choices[0].message.content.strip()
