@@ -1,418 +1,136 @@
-# Evret Agent & Skills Documentation
+# AGENTS.md
 
-## Overview
+Guidance for AI coding agents working on **Evret** — a focused, lightweight retriever
+evaluation framework providing standard Information Retrieval metrics for RAG, search,
+and recommendation systems. This file complements `README.md` (for humans) with
+agent-focused context. See [agents.md](https://agents.md) for the format.
 
-This document describes the agent skills available in the Evret project. These skills are used by Claude Code to provide specialized guidance on retrieval evaluation metrics and RAG pipeline development.
+## Project overview
 
----
+Evret evaluates retrievers with standard IR metrics (Hit Rate, Recall, Precision, MRR,
+NDCG, ERR, RBP, Average Precision). It is a pure-Python library published to PyPI as
+`evret`, built around three pluggable concepts:
 
-## Agent Skills Directory Structure
+- **Retrievers** — adapters over vector DBs (Qdrant, Chroma, Elasticsearch, Weaviate,
+  Milvus) plus framework adapters (LangChain, LlamaIndex, Haystack).
+- **Judges** — decide whether a retrieved chunk matches a relevant answer: token
+  overlap, semantic (embeddings), and LLM-based (OpenAI / Anthropic / Google / TruLens).
+- **Metrics + Evaluator** — the orchestrator runs a dataset through a retriever, applies
+  a judge, and computes the configured metrics.
 
-```
-.agents/
-└── skills/
-    └── retriever-evals/
-        ├── SKILL.md                          # Main RAG metrics skill
-        └── metrics/
-            ├── HITRATE_SKILL.md              # Hit Rate metric guidance
-            ├── RECALL_SKILL.md               # Recall@K metric guidance
-            ├── PRECISION_SKILL.md            # Precision@K metric guidance
-            ├── MRR_SKILL.md                  # MRR metric guidance
-            ├── NDCG_SKILL.md                 # nDCG metric guidance
-            ├── ERR_SKILL.md                  # ERR metric guidance
-            ├── RBP_SKILL.md                  # RBP metric guidance
-            └── AVERAGE_PRECISION_SKILL.md    # Average Precision/MAP guidance
-```
+## Setup commands
 
----
+Use `uv` for local development (Python >= 3.10):
 
-## Available Skills
-
-### 1. RAG Metrics Skill (`rag-metrics`)
-
-**Location**: [.agents/skills/retriever-evals/SKILL.md](.agents/skills/retriever-evals/SKILL.md)
-
-**Trigger Keywords**:
-- RAG pipeline, retrieval system, vector search
-- MRR, nDCG, Hit Rate, Recall, retrieval metrics, ranking metrics
-- Debugging hallucinating LLM
-- Tuning retriever or reranker
-- Choosing between retrieval evaluation metrics
-
-**Purpose**: Provides high-level guidance on choosing the right retrieval evaluation metric for different use cases.
-
-**Key Topics**:
-- Metric selection guidance based on use case
-- Stage-based recommendations (debugging, tuning, eval)
-- Comparison table of all metrics
-- Best practices for multi-objective evaluation
-
-**Quick Reference**:
-| Use Case | Recommended Metric | Why |
-|----------|-------------------|-----|
-| Check if any correct result retrieved | Hit Rate | Binary success check |
-| Measure completeness of results | Recall | Coverage metric |
-| Know how early first correct result appears | MRR | Single-answer QA optimization |
-| Care about ranking quality | nDCG | Multi-relevance ranking quality |
-| Model user satisfaction with graded relevance | ERR | Cascade browsing behavior |
-| Model result quality with user patience | RBP | Tunable position weighting |
-
----
-
-### 2. Hit Rate Metric Skill (`hitrate-metric`)
-
-**Location**: [.agents/skills/retriever-evals/metrics/HITRATE_SKILL.md](.agents/skills/retriever-evals/metrics/HITRATE_SKILL.md)
-
-**Trigger Keywords**:
-- Hit Rate
-- Binary check on retrieval
-- Debugging hallucinating LLM
-- Simplest retrieval metric
-- Validating chunks in top-k results
-
-**Purpose**: Deep dive into Hit Rate metric - the first-line diagnostic for RAG systems.
-
-**Formula**:
-```
-Hit Rate = (1/|Q|) × Σ 𝟙[relevant ∩ retrieved ≠ ∅]
+```bash
+uv venv
+source .venv/bin/activate
+uv pip install -e ".[all,dev]"   # editable install with every optional integration
 ```
 
-**When to Use**:
-- ✅ Initial RAG debugging / baseline check
-- ✅ Embedding model or chunking strategy swap
-- ✅ Reranker evaluation (alongside nDCG)
-- ❌ Evaluating ranking quality (use MRR or nDCG)
-- ❌ Completeness-critical retrieval (use Recall)
+Plain pip works too: `pip install -e ".[all,dev]"`.
 
-**Best Practices**:
-1. Use as entry-point metric, not final one
-2. Choose k that mirrors production context window
-3. Segment by query difficulty and domain
-4. Pair with MRR to separate presence from position
-5. Use in CI/CD to catch regressions
+Optional dependency groups are defined in `pyproject.toml` — install only what you need
+(e.g. `.[qdrant]`, `.[langchain]`, `.[semantic]`, `.[llm-openai]`, `.[trulens-openai]`).
 
----
+## Testing
 
-### 3. Recall@K Metric Skill (`recall-metric`)
-
-**Location**: [.agents/skills/retriever-evals/metrics/RECALL_SKILL.md](.agents/skills/retriever-evals/metrics/RECALL_SKILL.md)
-
-**Trigger Keywords**:
-- Recall, Recall@K
-- Coverage metric
-- Completeness of retrieval
-- Multi-document QA
-
-**Purpose**: Measures what fraction of all relevant documents were retrieved.
-
-**Formula**:
-```
-Recall@k = |relevant ∩ retrieved_k| / |relevant|
+```bash
+pytest                                  # all unit tests (config in pyproject.toml)
+pytest tests/metrics/test_hit_rate.py   # a single file
+pytest --cov=evret --cov-report=html    # with coverage
+EVRET_RUN_INTEGRATION=1 pytest -m integration   # Docker-backed integration tests
 ```
 
-**When to Use**:
-- ✅ Multi-document QA or synthesis tasks
-- ✅ Completeness-critical domains (medical, financial, safety)
-- ✅ Measuring coverage improvements
-- ❌ When you only care about first hit (use MRR)
-- ❌ When ranking quality matters more (use nDCG)
+- Tests live under `tests/`, mirroring the `src/evret/` layout.
+- `integration` is the only custom marker; those tests need Docker and are skipped
+  unless `EVRET_RUN_INTEGRATION=1` is set.
+- Run `pytest` before committing and fix all failures. Add tests for any new metric,
+  judge, or retriever.
+- Name tests descriptively: `test_<function>_<scenario>_<expected_result>`.
 
----
+## Code style
 
-### 4. Precision@K Metric Skill (`precision-metric`)
+- Follow PEP 8; max line length **100**.
+- Type-hint all function signatures. `from __future__ import annotations` at the top.
+- Format with `black src/ tests/`; type-check with `mypy src/` (both recommended).
+- Imports: absolute only, grouped stdlib → third-party → local, alphabetized per group.
+- Guard optional third-party imports and raise `OptionalDependencyError` (see
+  `src/evret/errors.py`) when a needed extra isn't installed — never let the base
+  package hard-import an optional dependency.
 
-**Location**: [.agents/skills/retriever-evals/metrics/PRECISION_SKILL.md](.agents/skills/retriever-evals/metrics/PRECISION_SKILL.md)
-
-**Trigger Keywords**:
-- Precision, Precision@K
-- Purity metric
-- LLM context quality
-- Noise reduction
-
-**Purpose**: Measures what fraction of retrieved documents are relevant.
-
-**Formula**:
-```
-Precision@k = |relevant ∩ retrieved_k| / k
-```
-
-**When to Use**:
-- ✅ LLM context quality optimization
-- ✅ Noise reduction in retrieved results
-- ✅ Limited context window scenarios
-- ❌ When you need to measure coverage (use Recall)
-- ❌ When ranking order matters (use MRR or nDCG)
-
----
-
-### 5. MRR (Mean Reciprocal Rank) Skill (`mrr-metric`)
-
-**Location**: [.agents/skills/retriever-evals/metrics/MRR_SKILL.md](.agents/skills/retriever-evals/metrics/MRR_SKILL.md)
-
-**Trigger Keywords**:
-- MRR, Mean Reciprocal Rank
-- First-hit metric
-- Single-answer QA
-- Fast-hit evaluation
-
-**Purpose**: Measures how early the first relevant result appears in rankings.
-
-**Formula**:
-```
-MRR = (1/|Q|) × Σ (1/rank_first_relevant)
-```
-
-**Scoring**:
-- Rank 1 → score = 1.0
-- Rank 2 → score = 0.5
-- Rank 5 → score = 0.2
-
-**When to Use**:
-- ✅ Single-answer QA systems
-- ✅ Intent classification, slot filling
-- ✅ Fast-hit optimization
-- ❌ Multi-document tasks (use nDCG)
-- ❌ When you need all relevant results (use Recall)
-
----
-
-### 6. nDCG (Normalized Discounted Cumulative Gain) Skill (`ndcg-metric`)
-
-**Location**: [.agents/skills/retriever-evals/metrics/NDCG_SKILL.md](.agents/skills/retriever-evals/metrics/NDCG_SKILL.md)
-
-**Trigger Keywords**:
-- nDCG, DCG, Normalized Discounted Cumulative Gain
-- Ranking quality
-- Graded relevance
-- Reranker tuning
-
-**Purpose**: Measures ranking quality across all relevant results with support for graded relevance.
-
-**Formula**:
-```
-DCG@k = Σ (rel_i / log₂(i+1))
-nDCG@k = DCG@k / IDCG@k
-```
-
-**Positional Discount**:
-- Rank 1: discount = 1.0
-- Rank 2: discount ≈ 0.63
-- Rank 5: discount ≈ 0.39
-
-**When to Use**:
-- ✅ Reranker evaluation
-- ✅ Multi-document QA or synthesis
-- ✅ Search systems with graded relevance
-- ✅ System-level RAG evaluation
-- ❌ Simple RAG debugging (use Hit Rate)
-- ❌ Single-answer QA (use MRR)
-
-**Best Practices**:
-1. Invest in graded relevance labels (exact/partial/irrelevant)
-2. Match k to reranker's output size
-3. Pair with Hit Rate to prevent coverage regression
-4. Compare against BM25 baseline
-5. Normalize relevance scale across annotators
-
----
-
-### 7. ERR (Expected Reciprocal Rank) Skill (`err-metric`)
-
-**Location**: [.agents/skills/retriever-evals/metrics/ERR_SKILL.md](.agents/skills/retriever-evals/metrics/ERR_SKILL.md)
-
-**Trigger Keywords**:
-- ERR, Expected Reciprocal Rank
-- Cascade model
-- User satisfaction
-- Graded relevance
-
-**Purpose**: Models how likely a user is to be satisfied while scanning ranked results from top to bottom.
-
-**Formula**:
-```
-ERR@k = Σ(i=1 to k) [(1/i) × R(i) × Π(j=1 to i-1)(1 - R(j))]
-R(i) = (2^grade(i) - 1) / 2^max_grade
-```
-
-**When to Use**:
-- ✅ Graded relevance judgments are available
-- ✅ User satisfaction and stopping behavior matter
-- ✅ Earlier highly relevant results should dominate the score
-- ❌ Binary-only first-hit checks (use MRR or Hit Rate)
-- ❌ Coverage-critical retrieval (use Recall)
-
----
-
-### 8. RBP (Rank-Biased Precision) Skill (`rbp-metric`)
-
-**Location**: [.agents/skills/retriever-evals/metrics/RBP_SKILL.md](.agents/skills/retriever-evals/metrics/RBP_SKILL.md)
-
-**Trigger Keywords**:
-- RBP, Rank-Biased Precision
-- Persistence parameter
-- User patience
-- Position-weighted precision
-
-**Purpose**: Measures ranked result quality using a tunable persistence parameter that controls how deep users are expected to look.
-
-**Formula**:
-```
-RBP(p)@k = (1 - p) × Σ(i=1 to k) [p^(i-1) × rel(i)]
-```
-
-**When to Use**:
-- ✅ User patience differs by product or search mode
-- ✅ You need tunable position weighting
-- ✅ Comparing incomplete or different-length rankings
-- ❌ You need all relevant documents recovered (use Recall)
-- ❌ You need cascade satisfaction behavior (use ERR)
-
----
-
-### 9. Average Precision (MAP) Skill (`average-precision-metric`)
-
-**Location**: [.agents/skills/retriever-evals/metrics/AVERAGE_PRECISION_SKILL.md](.agents/skills/retriever-evals/metrics/AVERAGE_PRECISION_SKILL.md)
-
-**Trigger Keywords**:
-- Average Precision, AP, MAP
-- Mean Average Precision
-- Rank-aware precision
-- Benchmark comparison
-
-**Purpose**: Rank-aware precision metric that considers all relevant results and their positions.
-
-**Formula**:
-```
-AP = (1/R) × Σ P(k) × 𝟙[doc_k is relevant]
-```
-
-Where R is the total number of relevant documents.
-
-**When to Use**:
-- ✅ Benchmark comparison across systems
-- ✅ Multi-relevant query evaluation
-- ✅ Academic/research contexts
-- ❌ When only first hit matters (use MRR)
-- ❌ When graded relevance is needed (use nDCG)
-
----
-
-## Metric Selection Decision Tree
+## Project structure
 
 ```
-Start: What are you trying to optimize?
+src/evret/
+├── __init__.py          # public API surface — keep __all__ in sync with new exports
+├── errors.py            # EvretError, EvretValidationError, OptionalDependencyError
+├── logging.py           # configure_logging, get_logger
+├── metrics/             # hit_rate, recall, precision, mrr, ndcg, err, rbp,
+│                        #   average_precision (+ base.py; _-prefixed helpers are private)
+├── retrievers/          # base + qdrant/chroma/elasticsearch/weaviate/milvus adapters
+├── judges/              # base, token_overlap, semantic, trulens
+│   └── llm/             # LLM judge: factory, prompts, providers/{openai,anthropic,google}
+├── integrations/        # langchain, llamaindex, haystack retriever adapters
+├── evaluation/          # Evaluator, EvaluationDataset, EvaluationResults, examples
+└── generation/          # synthetic dataset generation (chunking + LLM prompts)
 
-├─ Basic functionality check?
-│  └─ Use: Hit Rate
-│
-├─ How early is the first relevant result?
-│  └─ Use: MRR
-│
-├─ How many relevant results did we find?
-│  └─ Use: Recall
-│
-├─ How pure are the results?
-│  └─ Use: Precision
-│
-├─ How well are results ranked? (binary relevance)
-│  └─ Use: Average Precision (MAP)
-│
-├─ How well are results ranked? (graded relevance)
-│  └─ Use: nDCG
-│
-├─ How satisfied is a user while scanning results?
-│  └─ Use: ERR
-│
-└─ How does ranking quality change with user patience?
-   └─ Use: RBP
+docs/        # MkDocs (Material) site — mirror public API changes here
+examples/    # runnable examples (qdrant demo, trulens-judge, streamlit dashboard, …)
+tests/       # pytest suite mirroring src/
 ```
 
----
+## Public API conventions
 
-## Integration with Evret Framework
+- The supported entry point is `from evret import ...`. Everything users should reach is
+  re-exported in `src/evret/__init__.py`. When you add or rename a public class/function,
+  update both the relevant subpackage `__init__.py` **and** the top-level `__all__`.
+- Current exports include: metrics (`HitRate`, `Recall`, `Precision`, `MRR`, `NDCG`,
+  `ERR`, `RBP`, `AveragePrecision`), retrievers (`QdrantRetriever`, `ChromaRetriever`,
+  `ElasticsearchRetriever`, `WeaviateRetriever`, `MilvusRetriever`, `BaseRetriever`,
+  `RetrievalResult`), judges (`Judge`, `JudgmentContext`, `TokenOverlapJudge`),
+  evaluation (`Evaluator`, `EvaluationDataset`, `EvaluationResults`, `QueryExample`,
+  `DocumentExample`), generation, and integration adapters.
 
-These skills guide the implementation and usage of the metrics in the Evret framework:
+### Minimal usage shape
 
-**Implementation Reference**:
-- Metric base class: [src/evret/metrics/base.py](src/evret/metrics/base.py)
-- Individual metrics: [src/evret/metrics/](src/evret/metrics/)
-- Evaluation orchestrator: [src/evret/evaluation/evaluator.py](src/evret/evaluation/evaluator.py)
-
-**Usage Example**:
 ```python
-from evret.retrievers import QdrantRetriever
-from evret.evaluation import Evaluator, Dataset
-from evret.metrics import ERR, HitRate, MRR, NDCG, RBP
+from evret import EvaluationDataset, Evaluator, HitRate, MRR, NDCG, TokenOverlapJudge
 
-# Setup retriever
-retriever = QdrantRetriever(
-    url="http://localhost:6333",
-    collection_name="my_docs"
-)
-
-# Load evaluation dataset
-dataset = Dataset.from_json("eval_data.json")
-
-# Run evaluation with multiple metrics
+dataset = EvaluationDataset.from_json("eval_data.json")
 evaluator = Evaluator(
-    retriever=retriever,
-    metrics=[
-        HitRate(k=5),    # Binary presence check
-        MRR(k=10),       # First-hit optimization
-        NDCG(k=5),       # Ranking quality
-        ERR(k=5),        # User satisfaction
-        RBP(k=5),        # User patience weighting
-    ]
+    retriever=my_retriever,
+    metrics=[HitRate(k=4), MRR(k=4), NDCG(k=4)],
+    judge=TokenOverlapJudge(min_tokens=15, overlap_ratio=0.6),
 )
-
 results = evaluator.evaluate(dataset)
 print(results.summary())
 ```
 
----
+## LLM / provider notes
 
-## Metric Comparison Summary
+- Provider SDKs (OpenAI, Anthropic, Google GenAI, TruLens) are optional extras. When
+  touching LLM judges, prefer the latest Claude models for Anthropic defaults and keep
+  model identifiers current — do not reintroduce stale model names.
+- Never hard-code API keys; read them from the environment.
 
-| Metric | Type | Rank-Sensitive | First Hit Only | Best Use Case |
-|--------|------|----------------|----------------|---------------|
-| Hit Rate | Binary | No (threshold) | No | RAG debugging, presence check |
-| Recall | Binary/Graded | No | No | Completeness, coverage |
-| Precision | Binary/Graded | No | No | Context quality, noise reduction |
-| MRR | Binary | Yes | Yes | Fast hits, single-answer QA |
-| nDCG | Graded | Yes | No | Ranking quality, search systems |
-| ERR | Graded | Yes | No | User satisfaction, cascade behavior |
-| RBP | Binary/Graded | Yes | No | User patience, position-weighted quality |
-| Average Precision | Binary | Yes | No | Benchmark comparison, multi-relevant |
+## Documentation
 
----
+- Docs are built with MkDocs Material (`mkdocs.yml`, sources under `docs/`). Keep
+  `docs/` in sync when you change the public API, add a metric/judge/retriever, or change
+  behavior. `README.md` holds the human quick start.
 
-## Contributing New Skills
+## Commit & PR guidelines
 
-To add a new skill to the Evret agent system:
-
-1. Create a new `.md` file in [.agents/skills/retriever-evals/metrics/](.agents/skills/retriever-evals/metrics/) (for metric skills) or [.agents/skills/retriever-evals/](.agents/skills/retriever-evals/) (for general skills)
-
-2. Follow the frontmatter format:
-   ```markdown
-   ---
-   name: skill-name
-   description: Trigger conditions and use cases
-   ---
-   ```
-
-3. Include these sections:
-   - **What is the use of this metric/skill**
-   - **Mathematical Formula** (for metrics)
-   - **When to use this metric/skill**
-   - **Best practices**
-
-4. Update this `Agents.md` file with the new skill documentation
-
----
+- Branch from `main`; never commit directly to it.
+- Write clear, imperative commit messages (e.g. `Add ERR metric`, `Fix NDCG tie handling`).
+- Before opening a PR: `pytest` passes, new code is tested, docs and `__all__` updated.
+- PRs should state what changed, why, and reference any related issue.
+- See `CONTRIBUTING.md` and `CODE_OF_CONDUCT.md` for the full process.
 
 ## References
 
-- Project prompt: [PROMPT.md](PROMPT.md)
-- Project progress: [progress.md](progress.md)
+- Human quick start: [README.md](README.md)
 - Contributing guide: [CONTRIBUTING.md](CONTRIBUTING.md)
-- Main README: [README.md](README.md)
+- Architecture notes: [docs/architecture.md](docs/architecture.md)
+- Test setup & coverage areas: [tests/README.md](tests/README.md)
